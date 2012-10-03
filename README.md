@@ -32,13 +32,13 @@ Add a reference to the `QuantcastService` library project to your project with [
 
 ##### Without Eclipse #####
 
-Setup the `QuantcastService	` project to be buildable with the following command:
+Setup the `QuantcastService` project to be buildable with the following command:
 
 ``` bash
 android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastService/
 ```
 
-Add a reference to the `QuantcastService` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html)
+Add a reference to the `QuantcastService` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
 
 Note: For the `android update project` command described in the guide be sure to make the `-library` option a relative bath to the project or else your project will not be able to build.
 
