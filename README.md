@@ -67,28 +67,28 @@ Note: For the `android update project` command described in the guide be sure to
 3.	In the `onCreate()` method of you project's main `Activity` place the following to initialize the measurement service:
 
 	``` java
-	QuantcastClient.beginSession(this, PCODE, "optional", "labels");
+	QuantcastClient.beginSession(this, PCODE);
 	```
-	Here `PCODE` is a `String` containing your Quantcast publisher identifier objected from your account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). Note that your Quantcast publisher identifier is a string that begins with "p-" followed by 13 characters. Keep in mind that the `String` labels are entirely optional; you can have none or as many as you deem appropriate.
+	Here `PCODE` is a `String` containing your Quantcast publisher identifier objected from your account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). Note that your Quantcast publisher identifier is a string that begins with "p-" followed by 13 characters.
 	
 4.	In the `onDestroy()` method of you project's main `Activity` place the following to clean up the measurement service:
 
 	``` java
-	QuantcastClient.endSession("optional", "labels");
+	QuantcastClient.endSession();
 	```
 	
 5.	In the `onPause()` method of you project's main `Activity` place the following:
 
 	``` java
-	QuantcastClient.pauseSession("optional", "labels");
+	QuantcastClient.pauseSession();
 	```
 	
 6.	In the `onResume()` method of your project's main `Activity` place the following:
 
 	``` java
-	QuantcastClient.resumeSession("optional", "labels");
+	QuantcastClient.resumeSession();
 	```
-7.	Quantcast requires that you provide your users a means by which they can access the About Quantcast Screen. This should be a button in your app's options `Activity` with the title "About Quantcast". When the user taps the button you provide, you should call the Quantcast's Measurement SDK's `AboutQuantcastScreen` with the following:
+7.	Quantcast requires that you provide your users a means by which they can access the About Quantcast Screen. This should be a button in your app's preferences `Activity` with the title "About Quantcast". When the user taps the button you provide, you should call the Quantcast's Measurement SDK's `AboutQuantcastScreen` with the following:
 
 	``` java
 	QuantcastClient.showAboutQuantcastScreen(activity);
@@ -145,8 +145,13 @@ Where `userId` is a `String` containing the user identifier that you use. The SD
 
 You can set the log level of the Quantcast Measurement SDK by calling:
 
-``` javaQuantcastClient.setLogLevel(Log.VERBOSE);```The log level should be one of `Log.VERBOSE`, `Log.DEBUG`, `Log.INFO`, `Log.WARN`, `Log.ERROR`. The default log level for the Quantcast Measurement SDK is `Log.ERROR`.
-Everything logged by the Quantcast Measurement SDK will have a tag beginning with "q.".
+``` java
+QuantcastClient.setLogLevel(Log.VERBOSE);
+```
+
+The log level should be one of `Log.VERBOSE`, `Log.DEBUG`, `Log.INFO`, `Log.WARN`, `Log.ERROR`. The default log level for the Quantcast Measurement SDK is `Log.ERROR`.
+
+Everything logged by the Quantcast Measurement SDK will have a tag beginning with "q.".
 
 ### License ###
 
