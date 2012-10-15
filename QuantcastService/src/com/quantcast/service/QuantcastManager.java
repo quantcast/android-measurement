@@ -86,8 +86,7 @@ class QuantcastManager implements GlobalControlListener {
 
         synchronized (databaseHelper) {
             boolean delayed = QuantcastGlobalControlProvider.getProvider(context).isDelayed();
-            boolean blockingEventCollection = QuantcastGlobalControlProvider.getProvider(context).getControl().blockingEventCollection;
-            if (delayed || !blockingEventCollection) {
+            if (delayed || !QuantcastGlobalControlProvider.getProvider(context).getControl().blockingEventCollection) {
                 QuantcastLog.i(TAG, "Handling events.");
                 SQLiteDatabase db = null;
 
