@@ -88,17 +88,20 @@ Note: For the `android update project` command described in the guide be sure to
 	``` java
 	QuantcastClient.resumeSession();
 	```
-7.	Quantcast requires that you provide your users a means by which they can access the About Quantcast Screen. This should be a button in your app's preferences `Activity` with the title "About Quantcast". When the user taps the button you provide, you should call the Quantcast's Measurement SDK's `AboutQuantcastScreen` with the following:
-
-	``` java
-	QuantcastClient.showAboutQuantcastScreen(activity);
-	```
-	
-	Where `activity` is your project's main `Activity`.
-	
-	Note that when a user opts-out of Quantcast Measurement, it causes the SDK to immediately stop transmitting information to or from the user's device and it deletes any cached information that the SDK may have retained. Furthermore, when a user opts-out of a single app on a device, it affects all apps on the device that are using Quantcast Measurement.
 
 ### Optional Code Integrations ###
+
+#### User Opt-Out ####
+
+You may offer your app users the ability to opt-out of Quantcast Measurement. This is done by providing your users a means to access the About Quantcast Screen. This should be a button in your app's preferences `Activity` with the title "About Quantcast". When the user taps the button you provide, you should call the Quantcast's Measurement SDK's `AboutQuantcastScreen` with the following:
+
+``` java
+QuantcastClient.showAboutQuantcastScreen(activity);
+```
+	
+Where `activity` is your project's main `Activity`.
+	
+Note that when a user opts-out of Quantcast Measurement, it causes the SDK to immediately stop transmitting information to or from the user's device and it deletes any cached information that the SDK may have retained. Furthermore, when a user opts-out of a single app on a device, it affects all apps on the device that are using Quantcast Measurement.
 
 #### Tracking App Events ####
 
