@@ -14,6 +14,13 @@
 	``` xml
 	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
+-	To allow the `AboutQuantcastScreen` to show you must now use:
+	
+	``` xml
+	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
+	</activity>
+	```
+
 	
 -	The import line has changed to:
 

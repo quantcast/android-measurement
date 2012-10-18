@@ -67,7 +67,7 @@ Note: For the `android update project` command described in the guide be sure to
 	Also add the following lines within the `<application>` tag to allow the `AboutQuantcastScreen` to show:
 
 	``` xml
-	<activity android:name="com.quantcast.service.AboutQuantcastScreen" >
+	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
 	</activity>
 	```
 2.	Import the `QuantcastClient` into every `Acitivity` in your project by adding the following import:
