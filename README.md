@@ -50,6 +50,17 @@ Note: For the `android update project` command described in the guide be sure to
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	```
+	
+	You can optionaly add the following permissions to gather more information about your userbase:
+	
+	``` xml
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+	```
+	
+	and
+	
+	``` xml
 	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
 
@@ -59,31 +70,31 @@ Note: For the `android update project` command described in the guide be sure to
 	<activity android:name="com.quantcast.service.AboutQuantcastScreen" >
 	</activity>
 	```
-2.	Import the `QuantcastClient` into you project's main `Acitivity` by adding the following import:
+2.	Import the `QuantcastClient` into every `Acitivity` in your project by adding the following import:
 
 	``` java
-	import com.quantcast.service.QuantcastClient;
+	import com.quantcast.measurement.service.QuantcastClient;
 	```
-3.	In the `onCreate()` method of you project's main `Activity` place the following to initialize the measurement service:
+3.	In the `onCreate()` method of every `Activity` in your project place the following to initialize the measurement service:
 
 	``` java
 	QuantcastClient.beginSession(this, PCODE);
 	```
 	Here `PCODE` is a `String` containing your Quantcast publisher identifier objected from your account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). Note that your Quantcast publisher identifier is a string that begins with "p-" followed by 13 characters.
 	
-4.	In the `onDestroy()` method of you project's main `Activity` place the following to clean up the measurement service:
+4.	In the `onDestroy()` method of every `Activity` in your project place the following to clean up the measurement service:
 
 	``` java
-	QuantcastClient.endSession();
+	QuantcastClient.endSession(this);
 	```
 	
-5.	In the `onPause()` method of you project's main `Activity` place the following:
+5.	In the `onPause()` method of every `Activity` in your project place the following:
 
 	``` java
 	QuantcastClient.pauseSession();
 	```
 	
-6.	In the `onResume()` method of your project's main `Activity` place the following:
+6.	In the `onResume()` method of every `Activity` in your project place the following:
 
 	``` java
 	QuantcastClient.resumeSession();
@@ -99,7 +110,7 @@ You may offer your app users the ability to opt-out of Quantcast Measurement. Th
 QuantcastClient.showAboutQuantcastScreen(activity);
 ```
 	
-Where `activity` is your project's main `Activity`.
+Where `activity` is your project's preference `Activity`.
 	
 Note that when a user opts-out of Quantcast Measurement, it causes the SDK to immediately stop transmitting information to or from the user's device and it deletes any cached information that the SDK may have retained. Furthermore, when a user opts-out of a single app on a device, it affects all apps on the device that are using Quantcast Measurement.
 
@@ -121,10 +132,10 @@ While there is no specific constraint on the intended use of the label dimension
 
 #### Geo-Location Measurement ####
 
-If you would like to get geo-location aware reporting, you must turn on geo-tracking in the Measurement SDK. You do this in the `onCreate()` method of your project's main `Activity` before you call `beginSession()` with the following:
+If you would like to get geo-location aware reporting, you must turn on geo-tracking in the Measurement SDK. You do this in the `onCreate()` method of every `Activity` in your project before you call `beginSession()` with the following:
 
 ``` java
-QuantcastClient.enableLocationGathering = true;
+QuantcastClient.setEnableLocationGathering(true);
 ```
 
 Note that you should only enable geo-tracking if your app has some location-aware purpose.

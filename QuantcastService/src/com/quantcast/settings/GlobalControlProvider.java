@@ -8,6 +8,11 @@ public interface GlobalControlProvider {
      */
     public void refresh();
 
+    /**
+     * This should only be used when the provider is known to not be delayed
+     * 
+     * @param control
+     */
     public void saveControl(GlobalControl control);
     
     /**
