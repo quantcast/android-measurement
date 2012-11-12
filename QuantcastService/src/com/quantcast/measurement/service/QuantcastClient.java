@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import android.app.Activity;
 import android.content.Context;
@@ -30,6 +31,8 @@ public class QuantcastClient {
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastClient.class);
 
     private static final long TIME_TO_NEW_SESSION_IN_MS = 10 * 60 * 1000; // 10 minutes
+    
+    private static final Pattern apiKeyPattern = Pattern.compile("[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
 
     private static MeasurementSession session;
     private static Object sessionLock = new Object();
@@ -42,12 +45,72 @@ public class QuantcastClient {
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
      * @param context               Main Activity using the Quantcast Measurement API
-     * @param publisherCode         Developer's P-code, obtained from www.quantcast.com
-     * @param labels                Any arbitrary string that you want to be associated with this event, and will create a second dimension in Quantcast Measurement reporting.
-     *                              Nominally, this is a "user class" indicator.
-     *                              For example, you might use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      */
-    public static void beginSession(Activity activity, String publisherCode, String... labels) {
+    public static void beginSessionWithApiKey(Activity activity, String apiKey) {
+        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null);
+    }
+    
+    /**
+     * Start a new measurement session. Should be called in the main activity's onCreate method.
+     *
+     * @param context               Main Activity using the Quantcast Measurement API
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param label                 A label for the event.
+     */
+    public static void beginSessionWithApiKey(Activity activity, String apiKey, String label) {
+        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null, label);
+    }
+    
+    /**
+     * Start a new measurement session. Should be called in the main activity's onCreate method.
+     *
+     * @param context               Main Activity using the Quantcast Measurement API
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param labels                An array of labels for the event.
+     */
+    public static void beginSessionWithApiKey(Activity activity, String apiKey, String[] labels) {
+        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null, labels);
+    }
+    
+    /**
+     * Start a new measurement session. Should be called in the main activity's onCreate method.
+     *
+     * @param context               Main Activity using the Quantcast Measurement API
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param userId                A consistent identifier for the current user.
+     *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
+     *                              Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     */
+    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId) {
+        beginSessionWithApiKeyAndWithUserId(activity, apiKey, userId, new String[0]);
+    }
+    
+    /**
+     * Start a new measurement session. Should be called in the main activity's onCreate method.
+     *
+     * @param context               Main Activity using the Quantcast Measurement API
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param userId                A consistent identifier for the current user.
+     *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
+     *                              Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     * @param label                 A label for the event.
+     */
+    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId,  String label) {
+        beginSessionWithApiKeyAndWithUserId(activity, apiKey, userId, new String[] { label });
+    }
+    
+    /**
+     * Start a new measurement session. Should be called in the main activity's onCreate method.
+     *
+     * @param context               Main Activity using the Quantcast Measurement API
+     * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param userId                A consistent identifier for the current user.
+     *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
+     *                              Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     * @param labels                An array of labels for the event.
+     */
+    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId, String[] labels) {
         synchronized (sessionLock) {
             if (activeContexts == null) {
                 activeContexts = new HashSet<Integer>();
@@ -58,7 +121,7 @@ public class QuantcastClient {
             if (session == null) {
                 QuantcastLog.i(TAG, "Initializing new session.");
                 QuantcastGlobalControlProvider.getProvider(activity).refresh();
-                session = new MeasurementSession(activity, publisherCode, labels);
+                session = new MeasurementSession(apiKey, userId, activity, labels);
                 startLocationGathering(activity);
                 QuantcastLog.i(TAG, "New session initialization complete.");
             }
@@ -81,9 +144,36 @@ public class QuantcastClient {
     public static void recordUserIdentifier(String userId) {
         synchronized (sessionLock) {
             if (session != null) {
-                session.logUserId(userId);
+                session = new MeasurementSession(session, userId);
             }
         }
+    }
+    
+    /**
+     * Logs an app-defined event can be arbitrarily defined.
+     *
+     * @param name                  A string that identifies the event being logged. Hierarchical information can be indicated by using a left-to-right notation with a period as a separator.
+     *                              For example, logging one event named "button.left" and another named "button.right" will create three reportable items in Quantcast App Measurement:
+     *                              "button.left", "button.right", and "button".
+     *                              There is no limit on the cardinality that this hierarchical scheme can create,
+     *                              though low-frequency events may not have an audience report on due to the lack of a statistically significant population.
+     */
+    public static void logEvent(String name) {
+        logEvent(name, new String[0]);
+    }
+    
+    /**
+     * Logs an app-defined event can be arbitrarily defined.
+     *
+     * @param name                  A string that identifies the event being logged. Hierarchical information can be indicated by using a left-to-right notation with a period as a separator.
+     *                              For example, logging one event named "button.left" and another named "button.right" will create three reportable items in Quantcast App Measurement:
+     *                              "button.left", "button.right", and "button".
+     *                              There is no limit on the cardinality that this hierarchical scheme can create,
+     *                              though low-frequency events may not have an audience report on due to the lack of a statistically significant population.
+     * @param label                 A label for the event.
+     */
+    public static void logEvent(String name, String label) {
+        logEvent(name, new String[] { label });
     }
 
     /**
@@ -94,56 +184,99 @@ public class QuantcastClient {
      *                              "button.left", "button.right", and "button".
      *                              There is no limit on the cardinality that this hierarchical scheme can create,
      *                              though low-frequency events may not have an audience report on due to the lack of a statistically significant population.
-     * @param labels                Any arbitrary string that you want to be associated with this event, and will create a second dimension in Quantcast Measurement reporting.
-     *                              Nominally, this is a "user class" indicator.
-     *                              For example, you might use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+     * @param labels                An array of labels for the event.
      */
-    public static void logEvent(String name, String... labels) {
+    public static void logEvent(String name, String[] labels) {
         synchronized (sessionLock) {
             if (session != null) {
                 session.logEvent(name, labels);
             }
         }
     }
+    
+    /**
+     * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
+     * 
+     */
+    public static void pauseSession() {
+        pauseSession(new String[0]);
+    }
+    
+    /**
+     * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
+     * 
+     * @param label                 A label for the event.
+     */
+    public static void pauseSession(String label) {
+        pauseSession(new String[] { label });
+    }
 
     /**
      * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
      * 
-     * @param labels                Any arbitrary string that you want to be associated with this event, and will create a second dimension in Quantcast Measurement reporting.
-     *                              Nominally, this is a "user class" indicator.
-     *                              For example, you might use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+     * @param labels                An array of labels for the event.
      */
-    public static void pauseSession(String... labels) {
+    public static void pauseSession(String[] labels) {
         synchronized (sessionLock) {
             if (session != null) {
                 session.pause(labels);
             }
         }
     }
+    
+    /**
+     * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
+     * 
+     */
+    public static void resumeSession() {
+        resumeSession(new String[0]);
+    }
+    
+    /**
+     * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
+     * 
+     * @param label                 A label for the event.
+     */
+    public static void resumeSession(String label) {
+        resumeSession(new String[] { label });
+    }
 
     /**
      * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
      * 
-     * @param labels                Any arbitrary string that you want to be associated with this event, and will create a second dimension in Quantcast Measurement reporting.
-     *                              Nominally, this is a "user class" indicator.
-     *                              For example, you might use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+     * @param labels                An array of labels for the event.
      */
-    public static void resumeSession(String... labels) {
+    public static void resumeSession(String[] labels) {
         synchronized (sessionLock) {
             if (session != null) {
                 session.resume(labels);
             }
         }
     }
+    
+    /**
+     * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
+     * 
+     */
+    public static void endSession(Activity activity) {
+        endSession(activity, new String[0]);
+    }
+    
+    /**
+     * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
+     * 
+     * @param label                 A label for the event.
+     */
+    public static void endSession(Activity activity, String label) {
+        endSession(activity, new String[] { label });
+    }
 
     /**
      * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
      * 
-     * @param labels                Any arbitrary string that you want to be associated with this event, and will create a second dimension in Quantcast Measurement reporting.
-     *                              Nominally, this is a "user class" indicator.
-     *                              For example, you might use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+     * @param labels                An array of labels for the event.
      */
-    public static void endSession(Activity activity, String... labels) {
+    public static void endSession(Activity activity, String[] labels) {
         synchronized (sessionLock) {
             if (activeContexts != null) {
                 activeContexts.remove(activity.hashCode());
@@ -250,7 +383,7 @@ public class QuantcastClient {
         // Do nothing
     }
 
-    private static String encodeLabelsForUpload(String... labels) {
+    protected static String encodeLabelsForUpload(String[] labels) {
         String labelsString = null;
 
         if (labels != null && labels.length > 0) {
@@ -286,28 +419,42 @@ public class QuantcastClient {
 
     private static class MeasurementSession implements GlobalControlListener {
 
-        private static String userId;
-
         private final Context context;
-        private final String publisherCode;
+        private final String apiKey;
         private final EventQueue eventQueue;
+        
+        private final String userId;
 
         private Session measurementSession;
 
         private boolean paused;
         private long lastPause;
+        
+        public MeasurementSession(String apiKey, String userId, Context context, String[] labels) {
+            validateApiKey(apiKey);
 
-        public MeasurementSession(Context context, String publisherCode, String... labels) {
-            if (publisherCode == null || "".equals(publisherCode)) {
-                throw new IllegalArgumentException("Publisher code must be set to a non-empty value. Please use the P-code provided to you by Quantcast.");
-            }
-
+            this.userId = userId;
             this.context = context.getApplicationContext();
-            this.publisherCode = publisherCode;
+            this.apiKey = apiKey;
 
-            eventQueue = new EventQueue(new QuantcastManager(context, publisherCode));
+            eventQueue = new EventQueue(new QuantcastManager(context, apiKey));
 
             logBeginSessionEvent(BeginSessionEvent.Reason.LAUNCH, labels);
+
+            QuantcastGlobalControlProvider.getProvider(context).registerListener(this);
+        }
+        
+        public MeasurementSession(MeasurementSession previousSession, String userId) {
+            this.context = previousSession.context;
+            QuantcastGlobalControlProvider.getProvider(context).unregisterListener(previousSession);
+            
+            this.userId = userId;
+            this.apiKey = previousSession.apiKey;
+            this.eventQueue = previousSession.eventQueue;
+            this.paused = previousSession.paused;
+            this.lastPause = previousSession.lastPause;
+            
+            logBeginSessionEvent(BeginSessionEvent.Reason.USERHHASH, null);
 
             QuantcastGlobalControlProvider.getProvider(context).registerListener(this);
         }
@@ -315,41 +462,36 @@ public class QuantcastClient {
         @Override
         public void callback(GlobalControl control) {
             if (!control.blockingEventCollection) {
-                logBeginSessionEvent(BeginSessionEvent.Reason.LAUNCH);
+                logBeginSessionEvent(BeginSessionEvent.Reason.LAUNCH, null);
             }
         }
 
-        public void logUserId(String userId) {
-            MeasurementSession.userId = userId;
-            logBeginSessionEvent(BeginSessionEvent.Reason.USERHHASH);
-        }
-
-        private void logBeginSessionEvent(BeginSessionEvent.Reason reason, String... labels) {
+        private void logBeginSessionEvent(BeginSessionEvent.Reason reason, String[] labels) {
             measurementSession = new Session();
-            postEvent(new BeginSessionEvent(context, measurementSession, reason, publisherCode, userId, encodeLabelsForUpload(labels)));
+            postEvent(new BeginSessionEvent(context, measurementSession, reason, apiKey, userId, encodeLabelsForUpload(labels)));
         }
 
-        public void logEvent(String name, String... labels) {
+        public void logEvent(String name, String[] labels) {
             postEvent(new AppDefinedEvent(measurementSession, name, encodeLabelsForUpload(labels)));
         }
 
-        public void pause(String... labels) {
+        public void pause(String[] labels) {
             paused = true;
             lastPause = System.currentTimeMillis();
             postEvent(new Event(EventType.PAUSE_SESSION, measurementSession, encodeLabelsForUpload(labels)));
         }
 
-        public void resume(String... labels) {
+        public void resume(String[] labels) {
             QuantcastGlobalControlProvider.getProvider(context).refresh();
             // TODO this should be driven by JSON policy
             if (paused && lastPause + TIME_TO_NEW_SESSION_IN_MS < System.currentTimeMillis()) {
-                logBeginSessionEvent(BeginSessionEvent.Reason.RESUME);
+                logBeginSessionEvent(BeginSessionEvent.Reason.RESUME, new String[0]);
             }
             paused = false;
             postEvent(new Event(EventType.RESUME_SESSION, measurementSession, encodeLabelsForUpload(labels)));
         }
 
-        public void end(String... labels) {
+        public void end(String[] labels) {
             postEvent(new Event(EventType.END_SESSION, measurementSession, encodeLabelsForUpload(labels)));
             QuantcastGlobalControlProvider.getProvider(context).unregisterListener(this);
             eventQueue.terminate();
@@ -371,6 +513,16 @@ public class QuantcastClient {
             QuantcastClient.startLocationGathering(context);
         }
 
+    }
+    
+    protected static void validateApiKey(String apiKey) {
+        if (apiKey == null) {
+            throw new IllegalArgumentException("No Quantcast API Key was passed to the SDK. Please use the API Key provided to you by Quantcast.");
+        }
+        
+        if (!apiKeyPattern.matcher(apiKey).matches()) {
+            throw new IllegalArgumentException("The Quantcast API Key passed to the SDK is malformed. Please use the API Key provided to you by Quantcast.");
+        }
     }
 
     private static LocationMonitor locationMonitor;

@@ -21,8 +21,8 @@ class PolicyEnforcer {
 
     private Policy obtainedPolicy;
 
-    public PolicyEnforcer(Context context, String apiVersion, String pCode) {
-        this(new QuantcastPolicyDAO(context, apiVersion), new QuantcastPolicyProvider(pCode, apiVersion), new DeviceInfoProvider(context));
+    public PolicyEnforcer(Context context, String apiVersion, String apiKey) {
+        this(new QuantcastPolicyDAO(context, apiVersion), new QuantcastPolicyProvider(apiKey, apiVersion), new DeviceInfoProvider(context));
     }
 
     public PolicyEnforcer(PolicyDAO policyDAO, PolicyProvider policyProvider, DeviceInfoProvider deviceInfoProvider) {
@@ -90,21 +90,6 @@ class PolicyEnforcer {
                 iter.remove();
             }
         }
-    }
-
-    public boolean hasPolicy() {
-        boolean hasPolicy = false;
-
-        if (policyDAO.getPolicy() != null) {
-            hasPolicy = true;
-        } else {
-            obtainPolicy();
-            if (obtainedPolicy != null) {
-                hasPolicy = true;
-            }
-        }
-
-        return hasPolicy;
     }
 
     private void obtainPolicy() {

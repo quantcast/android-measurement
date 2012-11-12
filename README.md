@@ -78,9 +78,11 @@ Note: For the `android update project` command described in the guide be sure to
 3.	In the `onCreate()` method of every `Activity` in your project place the following to initialize the measurement service:
 
 	``` java
-	QuantcastClient.beginSession(this, PCODE);
+	QuantcastClient.beginSessionWithApiKey(this, <*Insert your API Key Here*>);
 	```
-	Here `PCODE` is a `String` containing your Quantcast publisher identifier objected from your account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). Note that your Quantcast publisher identifier is a string that begins with "p-" followed by 13 characters.
+	Replacing "<\*Insert your API Key Here\*>" with your Quantcast API Key, which you can generate in your Quantcast account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). 
+	
+Note that the API Key is used as basic reporting entity for Quantcast Measurement. You can use the same API Key across multiple apps across multiple platforms, and Quantcast will report the aggregate audience amongst them all. Quantcast will identify and report on the individual app versions seen under the API Key, but the intent is that the API Key is used for a logical grouping of apps. For example, you may have a "lite" and "full" version of an app that you group together with the same API Key.
 	
 4.	In the `onDestroy()` method of every `Activity` in your project place the following to clean up the measurement service:
 
@@ -132,7 +134,7 @@ While there is no specific constraint on the intended use of the label dimension
 
 #### Geo-Location Measurement ####
 
-If you would like to get geo-location aware reporting, you must turn on geo-tracking in the Measurement SDK. You do this in the `onCreate()` method of every `Activity` in your project before you call `beginSession()` with the following:
+If you would like to get geo-location aware reporting, you must turn on geo-tracking in the Measurement SDK. You do this in the `onCreate()` method of every `Activity` in your project before you call `beginSessionWithApiKey()` with the following:
 
 ``` java
 QuantcastClient.setEnableLocationGathering(true);
@@ -151,7 +153,13 @@ In order to provide Quantcast Measurement with the user identifier, call the fol
 ``` java
 QuantcastClient.recordUserIdentifier(userId);
 ```
-Where `userId` is a `String` containing the user identifier that you use. The SDK will immediately 1-way hash the passed identifier.
+Where `userId` is a `String` containing the user identifier that you use. The SDK will immediately 1-way hash the passed identifier. A `null` `userId` indicates that the current user is uknown.
+
+When starting a Quantcast Measurement session, if you already know the user identifier (e.g., it was saved in the apps preferences) when the `onCreate()` method of any `Activity` is called, you may call the alternate version of the `beginSessionWithApiKey()` method:
+
+``` java
+QuantcastClient.beginSessionWithApiKeyAndWithUserId(this, <*Insert your API Key Here*>, userId);
+```
 
 *Important*: Use of this feature requires certain notice and disclosures to your website and app users. Please see Quantcast's terms of service for more details.
 

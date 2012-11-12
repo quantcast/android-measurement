@@ -21,8 +21,8 @@ class QuantcastPolicyProvider implements PolicyProvider {
 
     private JSONPolicyLookup lookup;
 
-    public QuantcastPolicyProvider(String pCode, String apiVersion) {
-        lookup = new QuantcastJSONPolicyLookup(pCode, apiVersion);
+    public QuantcastPolicyProvider(String apiKey, String apiVersion) {
+        lookup = new QuantcastJSONPolicyLookup(apiKey, apiVersion);
     }
 
     public QuantcastPolicyProvider(JSONPolicyLookup lookup) {

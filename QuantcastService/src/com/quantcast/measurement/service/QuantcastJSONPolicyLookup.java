@@ -23,13 +23,13 @@ class QuantcastJSONPolicyLookup implements JSONPolicyLookup {
     private final String policyRequestURL;
     private final HttpClient httpClient;
     
-    public QuantcastJSONPolicyLookup(String pCode, String apiVersion) {
-        policyRequestURL = generatePolicyRequestURL(pCode, apiVersion);
+    public QuantcastJSONPolicyLookup(String apiKey, String apiVersion) {
+        policyRequestURL = generatePolicyRequestURL(apiKey, apiVersion);
         httpClient = new DefaultHttpClient();
     }
     
-    public QuantcastJSONPolicyLookup(String pCode, String apiVersion, HttpClient httpClient) {
-        policyRequestURL = generatePolicyRequestURL(pCode, apiVersion);
+    public QuantcastJSONPolicyLookup(String apiKey, String apiVersion, HttpClient httpClient) {
+        policyRequestURL = generatePolicyRequestURL(apiKey, apiVersion);
         this.httpClient = httpClient;
     }
 
@@ -59,14 +59,14 @@ class QuantcastJSONPolicyLookup implements JSONPolicyLookup {
     }
     
     private static final String POLICY_REQUEST_BASE = "http://m.quantserve.com/policy.json";
-    private static final String POLICY_REQUEST_PCODE_PARAMETER = "a";
+    private static final String POLICY_REQUEST_API_KEY_PARAMETER = "a";
     private static final String POLICY_REQUEST_API_VERSION_PARAMETER = "v";
     private static final String POLICY_REQUEST_DEVICE_TYPE_PARAMTER = "t";
     private static final String POLICY_REQUEST_DEVICE_TYPE = "ANDROID";
     
-    public static final String generatePolicyRequestURL(String pCode, String apiVersion) {
+    public static final String generatePolicyRequestURL(String apiKey, String apiVersion) {
         Uri.Builder builder = Uri.parse(POLICY_REQUEST_BASE).buildUpon();
-        builder.appendQueryParameter(POLICY_REQUEST_PCODE_PARAMETER, pCode);
+        builder.appendQueryParameter(POLICY_REQUEST_API_KEY_PARAMETER, apiKey);
         builder.appendQueryParameter(POLICY_REQUEST_API_VERSION_PARAMETER, apiVersion);
         builder.appendQueryParameter(POLICY_REQUEST_DEVICE_TYPE_PARAMTER, POLICY_REQUEST_DEVICE_TYPE);
         return builder.build().toString();

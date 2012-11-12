@@ -14,13 +14,13 @@
 	``` xml
 	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
+	
 -	To allow the `AboutQuantcastScreen` to show you must now use:
 	
 	``` xml
 	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
 	</activity>
 	```
-
 	
 -	The import line has changed to:
 
@@ -35,8 +35,31 @@
 	``` java
 	QuantcastClient.endSession(this);
 	```
+	
 -	To enable location gathering you must now call:
 	
 	``` java
 	QuantcastClient.setEnableLocationGathering(true);
 	```
+	
+## Version 0.2.4 ##
+
+- 	Added API key implementation
+- 	The option to record a user identifier at the beginning of a session has been added.
+- 	Remover String vararg for labels
+
+### Implementation Changes ###
+
+- 	To start a session you now call:
+
+	``` java
+	QuantcastClient.beginSessionWithApiKey(this, <*Insert your API Key Here*>);
+	```
+	
+	or
+	
+	``` java
+	QuantcastClient.beginSessionWithApiKeyAndWithUserId(this, <*Insert your API Key Here*>, userId);
+	```
+	
+-	To log an event with labels you must provide a single `String` label or and array of `String` labels.

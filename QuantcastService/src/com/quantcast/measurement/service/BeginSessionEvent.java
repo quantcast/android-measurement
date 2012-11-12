@@ -36,7 +36,7 @@ class BeginSessionEvent extends Event {
         
     }
 
-    private static final String PCODE_PARAMETER = "a";
+    private static final String API_KEY_PARAMETER = "apikey";
     private static final String PARAMETER_ANAME = "aname";
     private static final String PARAMETER_AVER = "aver";
     private static final String PARAMETER_UH = "uh";
@@ -60,11 +60,11 @@ class BeginSessionEvent extends Event {
     private static final String REASON_PARAMETER = "nsr";
     private static final String APPLICATION_ID_PARAMETER = "aid";
 
-    BeginSessionEvent(Context context, Session session, Reason reason, String publisherCode, String userId, String labels) {
+    BeginSessionEvent(Context context, Session session, Reason reason, String apiKey, String userId, String labels) {
         super(EventType.BEGIN_SESSION, session, labels);
 
         put(REASON_PARAMETER, new JsonString(reason.parameterValue));
-        put(PCODE_PARAMETER, new JsonString(publisherCode));
+        put(API_KEY_PARAMETER, new JsonString(apiKey));
         put(PARAMETER_MEDIA, new JsonString(DEFAULT_MEDIA_PARAMETER));
         if (userId != null) {
             put(PARAMETER_UH, new JsonString(QuantcastServiceUtility.applyHash(userId)));

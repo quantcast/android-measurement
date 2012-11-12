@@ -42,29 +42,32 @@ class QuantcastManager implements GlobalControlListener {
     private static final String PARAMETER_EVENTS = "events";
 
     private static final String UPLOAD_URL = "http://m.quantserve.com/mobile";
-    private static final String API_VERSION = "0_2_3";
+    private static final String API_VERSION = "0_2_4";
 
     private static final int MAX_UPLOAD_SIZE = 500;
     private static final int MIN_UPLOAD_SIZE = 100;
 
     private final Context context;
     private final EventsDatabaseHelper databaseHelper;
-    private final PolicyEnforcer policyEnforcer;
 
     private boolean withEvents;
+
+    private final String apiKey;
+    private final Object policyEnforcerLock = new Object();
+    private volatile PolicyEnforcer policyEnforcer;
 
     /**
      * Constructor.
      * Must be called from service thread.
      *
-     * @param publisherCode     P-code
+     * @param apiKey            The apiKey provided by the developer
      * @param context           A context to use for resources
      */
-    QuantcastManager(Context context, String publisherCode) {
+    QuantcastManager(Context context, String apiKey) {
         context = context.getApplicationContext();
         this.context = context;
         databaseHelper = EventsDatabaseHelper.checkoutDatabaseHelper(context);
-        policyEnforcer = new PolicyEnforcer(context, API_VERSION, publisherCode);
+        this.apiKey = apiKey;
 
         withEvents = true;
 
@@ -82,6 +85,15 @@ class QuantcastManager implements GlobalControlListener {
 
                     if (eventsToUpload.size() > MIN_UPLOAD_SIZE || forceUpload) {
                         QuantcastLog.i(TAG, "Uploading " + eventsToUpload.size() + " events.");
+
+                        if (policyEnforcer == null) {
+                            synchronized (policyEnforcerLock) {
+                                if (policyEnforcer == null) {
+                                    policyEnforcer = new PolicyEnforcer(context, API_VERSION, apiKey);
+                                }
+                            }
+                        }
+
                         if(uploadEvents(context, eventsToUpload, policyEnforcer)) {
                             databaseHelper.removeEvents(db, eventsToUpload);
                         }
@@ -104,7 +116,7 @@ class QuantcastManager implements GlobalControlListener {
             }
         }
     }
-    
+
     /**
      * Use this method to add any parameters to events that may be too costly to add in the main thread
      * 
