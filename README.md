@@ -48,7 +48,6 @@ Note: For the `android update project` command described in the guide be sure to
 
 	``` xml
 	<uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	```
 	
