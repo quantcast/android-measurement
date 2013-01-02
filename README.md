@@ -20,25 +20,25 @@ Once you have the repository cloned you need to add the `QuantcastAndroidMeasure
 
 ##### With Eclipse #####
 
-Import the `QuantcastService` project into your workspace with the following steps:
+Import the `QuantcastAndroidMeasurementSdk` project into your workspace with the following steps:
 
 1.	Go to **File > Import…**
 2.	Select **Android > Existing Android Code Into Workspace** and click **Next >**
-3.	For the **Root Directory** browse to `<repo cloning directory>/quantcast-android-measurement/QuantcastService`
+3.	For the **Root Directory** browse to `<repo cloning directory>/quantcast-android-measurement/QuantcastAndroidMeasurementSdk`
 4.	Make sure Copy projects into workspace is not checked
 5.	Click **Finish**
 
-Add a reference to the `QuantcastService` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-eclipse.html#ReferencingLibraryProject).
+Add a reference to the `QuantcastAndroidMeasurementSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-eclipse.html#ReferencingLibraryProject).
 
 ##### Without Eclipse #####
 
-Setup the `QuantcastService` project to be buildable with the following command:
+Setup the `QuantcastAndroidMeasurementSdk` project to be buildable with the following command:
 
 ``` bash
-android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastService/
+android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastAndroidMeasurementSdk/
 ```
 
-Add a reference to the `QuantcastService` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
+Add a reference to the `QuantcastAndroidMeasurementSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
 
 Note: For the `android update project` command described in the guide be sure to make the `-library` option a relative bath to the project or else your project will not be able to build.
 
