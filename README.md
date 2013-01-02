@@ -14,7 +14,7 @@ git clone https://github.com/quantcast/android-measurement.git quantcast-android
 
 #### Integrate via External JAR ####
 
-Once you have the repository cloned you need to add the `QuantcastService.jar` within to your project. You can do this by simply copying the file into your project's `libs/` directory or if you would like to keep the JAR external and are using Eclipse you can follow [this guide](http://developer.android.com/guide/faq/commontasks.html#addexternallibrary).
+Once you have the repository cloned you need to add the `QuantcastAndroidMeasurementSdk.jar` within to your project. You can do this by simply copying the file into your project's `libs/` directory or if you would like to keep the JAR external and are using Eclipse you can follow [this guide](http://developer.android.com/guide/faq/commontasks.html#addexternallibrary).
 
 #### Integrate via Library Project ####
 
