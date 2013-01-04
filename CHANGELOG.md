@@ -1,4 +1,4 @@
-# Quantcast Android Measurement SDK Changelog #
+# Quantcast Android SDK Changelog #
 
 ## Version 0.2.3 ##
 
