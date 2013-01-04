@@ -63,3 +63,13 @@
 	```
 	
 -	To log an event with labels you must provide a single `String` label or and array of `String` labels.
+
+## Version 0.3.0 ##
+
+-	Various optimizations and bug fixes
+-	Renamed project and built JAR
+
+### Implementation Changes ###
+
+-	The project JAR has been moved from `QuantcastService.jar` to `QuantcastAndroidSdk.jar`
+-	The project directory has been moved from `QuantcastService` to `QuantcastAndroidSdk`

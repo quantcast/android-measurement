@@ -14,31 +14,31 @@ git clone https://github.com/quantcast/android-measurement.git quantcast-android
 
 #### Integrate via External JAR ####
 
-Once you have the repository cloned you need to add the `QuantcastAndroidMeasurementSdk.jar` within to your project. You can do this by simply copying the file into your project's `libs/` directory or if you would like to keep the JAR external and are using Eclipse you can follow [this guide](http://developer.android.com/guide/faq/commontasks.html#addexternallibrary).
+Once you have the repository cloned you need to add the `QuantcastAndroidSdk.jar` within to your project. You can do this by simply copying the file into your project's `libs/` directory or if you would like to keep the JAR external and are using Eclipse you can follow [this guide](http://developer.android.com/guide/faq/commontasks.html#addexternallibrary).
 
 #### Integrate via Library Project ####
 
 ##### With Eclipse #####
 
-Import the `QuantcastAndroidMeasurementSdk` project into your workspace with the following steps:
+Import the `QuantcastAndroidSdk` project into your workspace with the following steps:
 
 1.	Go to **File > Import…**
 2.	Select **Android > Existing Android Code Into Workspace** and click **Next >**
-3.	For the **Root Directory** browse to `<repo cloning directory>/quantcast-android-measurement/QuantcastAndroidMeasurementSdk`
+3.	For the **Root Directory** browse to `<repo cloning directory>/quantcast-android-measurement/QuantcastAndroidSdk`
 4.	Make sure Copy projects into workspace is not checked
 5.	Click **Finish**
 
-Add a reference to the `QuantcastAndroidMeasurementSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-eclipse.html#ReferencingLibraryProject).
+Add a reference to the `QuantcastAndroidSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-eclipse.html#ReferencingLibraryProject).
 
 ##### Without Eclipse #####
 
-Setup the `QuantcastAndroidMeasurementSdk` project to be buildable with the following command:
+Setup the `QuantcastAndroidSdk` project to be buildable with the following command:
 
 ``` bash
-android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastAndroidMeasurementSdk/
+android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastAndroidSdk/
 ```
 
-Add a reference to the `QuantcastAndroidMeasurementSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
+Add a reference to the `QuantcastAndroidSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
 
 Note: For the `android update project` command described in the guide be sure to make the `-library` option a relative bath to the project or else your project will not be able to build.
 
