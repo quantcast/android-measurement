@@ -41,7 +41,7 @@ public class QuantcastClient {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastClient.class);
 
-    private static final long TIME_TO_NEW_SESSION_IN_MS = 10 * 60 * 1000; // 10 minutes
+    private static final long TIME_TO_NEW_SESSION_IN_MS = 30 * 60 * 1000; // 30 minutes
 
     private static final Pattern apiKeyPattern = Pattern.compile("[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
 
@@ -481,7 +481,6 @@ public class QuantcastClient {
 
         public void resume(String[] labels) {
             QuantcastGlobalControlProvider.getProvider(context).refresh();
-            // TODO this should be driven by JSON policy
             if (paused && lastPause + TIME_TO_NEW_SESSION_IN_MS < System.currentTimeMillis()) {
                 logBeginSessionEvent(BeginSessionEvent.Reason.RESUME, new String[0]);
             }

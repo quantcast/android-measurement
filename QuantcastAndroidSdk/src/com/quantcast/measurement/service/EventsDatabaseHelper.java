@@ -26,8 +26,6 @@ import android.text.TextUtils;
 
 import com.quantcast.json.Jsonifiable;
 
-// TODO This class could use some refactoring / testing
-// Database helper to read/write events, blacklist, and settings
 class EventsDatabaseHelper extends SQLiteOpenHelper {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(EventsDatabaseHelper.class);
@@ -35,14 +33,12 @@ class EventsDatabaseHelper extends SQLiteOpenHelper {
     private static final String NAME = "Quantcast.db";
     private static final int VERSION = 2;
 
-    // Tables and columns
-
     // Table that indexes events, one per event.
     static final String EVENTS_TABLE = "events";
     static final String EVENTS_COLUMN_ID = "id";            // primary key
     static final String EVENTS_COLUMN_DOH = "doh";          // tables must have at least one column; this doesn't do anything other than that
 
-    // Table of events, many per event
+    // Table of event parameters
     // Each event has a unique ID, which is the primary key (rowid) in the events table.
     static final String EVENT_PARAMETERS_TABLE = "event";
     static final String EVENT_PARAMETERS_COLUMN_EVENT_ID = "eventid";
@@ -71,14 +67,10 @@ class EventsDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    // Constructor
     private EventsDatabaseHelper(Context context) {
         super(context, NAME, null, VERSION);
     }
 
-    /* (non-Javadoc)
-     * @see android.database.sqlite.SQLiteOpenHelper#onCreate(android.database.sqlite.SQLiteDatabase)
-     */
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.beginTransaction();
@@ -108,9 +100,6 @@ class EventsDatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    /* (non-Javadoc)
-     * @see android.database.sqlite.SQLiteOpenHelper#onUpgrade(android.database.sqlite.SQLiteDatabase, int, int)
-     */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.beginTransaction();

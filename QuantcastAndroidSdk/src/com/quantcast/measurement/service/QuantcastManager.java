@@ -53,7 +53,7 @@ class QuantcastManager implements GlobalControlListener {
     private static final String PARAMETER_EVENTS = "events";
 
     private static final String UPLOAD_URL = "http://m.quantserve.com/mobile";
-    private static final String API_VERSION = "0_3_0";
+    private static final String API_VERSION = "0_3_1";
 
     private static final int MAX_UPLOAD_SIZE = 200;
     private static final int MIN_UPLOAD_SIZE = 100;
@@ -198,9 +198,8 @@ class QuantcastManager implements GlobalControlListener {
         }
     }
 
-    // TODO This method could be refactored. It's large and hard to follow.
     /**
-     * Upload any events in the db. On successful upload, clears the db
+     * Upload any events in the db.
      * 
      * @return True if successful, false otherwise
      */

@@ -195,7 +195,7 @@ class QuantcastPolicyDAO implements PolicyDAO {
 
                 db.setTransactionSuccessful();
             } catch (SQLException e) {
-                // TODO log this
+                QuantcastLog.e(TAG, "Failed to create policies table.", e);
             } finally {
                 db.endTransaction();
             }
