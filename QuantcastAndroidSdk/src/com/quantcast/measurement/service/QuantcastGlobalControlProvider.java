@@ -1,20 +1,21 @@
 /**
-* Copyright 2012 Quantcast Corp.
-*
-* This software is licensed under the Quantcast Mobile App Measurement Terms of Service
-* https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
-* (the “License”). You may not use this file unless (1) you sign up for an account at
-* https://www.quantcast.com and click your agreement to the License and (2) are in
-*  compliance with the License. See the License for the specific language governing
-* permissions and limitations under the License.
-*
-*/       
+ * Copyright 2012 Quantcast Corp.
+ *
+ * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
+ * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
+ * (the “License”). You may not use this file unless (1) you sign up for an account at
+ * https://www.quantcast.com and click your agreement to the License and (2) are in
+ *  compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License.
+ *
+ */       
 package com.quantcast.measurement.service;
 
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import android.content.Context;
 
@@ -42,9 +43,9 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
     private final GlobalControlDAO dao;
     private final GlobalControlAmbassador ambassador;
     private GlobalControl control;
-    private volatile Boolean delayed = true;
+    private final AtomicBoolean delayed = new AtomicBoolean(true);
 
-    private Set<GlobalControlListener> listeners;
+    private final Set<GlobalControlListener> listeners;
 
     public QuantcastGlobalControlProvider(GlobalControlDAO dao, GlobalControlAmbassador ambassador) {
         QuantcastLog.i(TAG, "Initializing new global control provider.");
@@ -57,7 +58,7 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
             @Override
             public void run() {
                 obtainInitialControl();
-                delayed = false;
+                delayed.set(false);
                 notifyListeners();
                 QuantcastLog.i(TAG, "Global control provider initialization complete.");
             }
@@ -86,18 +87,11 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
 
             @Override
             public void run() {
-                boolean runRefresh = false;
-
-                synchronized (delayed) {
-                    if (!delayed) {
-                        delayed = true;
-                        runRefresh = true;
-                    }
-                }
+                boolean runRefresh = delayed.compareAndSet(false, true);
 
                 if (runRefresh) {
                     GlobalControl newControl = dao.getLocal();
-                    delayed = false;
+                    delayed.set(false);
                     if (!control.equals(newControl)) {
                         control = newControl;
                     }
@@ -168,8 +162,6 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
 
     @Override
     public boolean isDelayed() {
-        synchronized (delayed) {
-            return delayed;
-        }
+        return delayed.get();
     }
 }

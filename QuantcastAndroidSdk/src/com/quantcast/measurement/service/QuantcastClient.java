@@ -17,6 +17,7 @@ import java.net.URLEncoder;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import android.app.Activity;
@@ -41,16 +42,27 @@ public class QuantcastClient {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastClient.class);
 
-    private static final long TIME_TO_NEW_SESSION_IN_MS = 30 * 60 * 1000; // 30 minutes
+    /**
+     * The maximum number of events that can be uploaded in a single upload.
+     */
+    public static final int MAX_UPLOAD_SIZE = 200;
+    /**
+     * The default number of events required to trigger an upload.
+     */
+    public static final int DEFAULT_UPLOAD_EVENT_COUNT = 100;
 
     private static final Pattern apiKeyPattern = Pattern.compile("[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
 
     private static MeasurementSession session;
-    private static Object sessionLock = new Object();
+    private static final Object SESSION_LOCK = new Object();
 
-    private static Boolean enableLocationGathering = false;
+    private static final AtomicBoolean ENABLE_LOCATION_GATHERING = new AtomicBoolean(false);
+
+    private static int uploadEventCount = DEFAULT_UPLOAD_EVENT_COUNT;
 
     public static Set<Integer> activeContexts;
+
+    private static volatile boolean usingSecureConnections = false;
 
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
@@ -122,7 +134,7 @@ public class QuantcastClient {
      * @param labels                An array of labels for the event.
      */
     public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId, String[] labels) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (activeContexts == null) {
                 activeContexts = new HashSet<Integer>();
             }
@@ -132,7 +144,7 @@ public class QuantcastClient {
             if (session == null) {
                 QuantcastLog.i(TAG, "Initializing new session.");
                 QuantcastGlobalControlProvider.getProvider(activity).refresh();
-                session = new MeasurementSession(apiKey, userId, activity, labels);
+                session = new MeasurementSession(apiKey, userId, activity, labels, uploadEventCount, MAX_UPLOAD_SIZE);
                 startLocationGathering(activity);
                 QuantcastLog.i(TAG, "New session initialization complete.");
             }
@@ -140,7 +152,7 @@ public class QuantcastClient {
     }
 
     static void addActivity(Activity activity) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             activeContexts.add(activity.hashCode());
         }
     }
@@ -153,7 +165,7 @@ public class QuantcastClient {
      *                              Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
      */
     public static void recordUserIdentifier(String userId) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session = new MeasurementSession(session, userId);
             }
@@ -198,7 +210,7 @@ public class QuantcastClient {
      * @param labels                An array of labels for the event.
      */
     public static void logEvent(String name, String[] labels) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session.logEvent(name, labels);
             }
@@ -228,7 +240,7 @@ public class QuantcastClient {
      * @param labels                An array of labels for the event.
      */
     public static void pauseSession(String[] labels) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session.pause(labels);
             }
@@ -258,7 +270,7 @@ public class QuantcastClient {
      * @param labels                An array of labels for the event.
      */
     public static void resumeSession(String[] labels) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session.resume(labels);
             }
@@ -288,7 +300,7 @@ public class QuantcastClient {
      * @param labels                An array of labels for the event.
      */
     public static void endSession(Activity activity, String[] labels) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (activeContexts != null) {
                 activeContexts.remove(activity.hashCode());
                 QuantcastLog.i(TAG, activeContexts.size() + " active contexts.");
@@ -306,16 +318,37 @@ public class QuantcastClient {
     }
 
     /**
+     * Set the number of events required to trigger an upload.
+     * This is defaulted to {@link #DEFAULT_UPLOAD_EVENT_COUNT}
+     * 
+     * @param uploadEventCount The number of events required to trigger an upload.
+     * This must be greater than 0 and less than or equal to {@link #MAX_UPLOAD_SIZE}.
+     * Invalid values will be ignored.
+     */
+    public static void setUploadEventCount(int uploadEventCount) {
+        if (uploadEventCount > 0 && uploadEventCount <= MAX_UPLOAD_SIZE) {
+            synchronized (SESSION_LOCK) {
+                QuantcastClient.uploadEventCount = uploadEventCount;
+                if (session != null) {
+                    session.setUplaodEventCount(uploadEventCount);
+                }
+            }
+        } else {
+            QuantcastLog.e(TAG, String.format("Illegal Argument: uploadEventCount should be greater than %d and less than or equal to %d.", 0, MAX_UPLOAD_SIZE));
+        }
+    }
+
+    /**
      * Use this to control whether or not the service should collect location data. You should only enabled location gathering if your app has some location-aware purpose.
      * 
      * @param enableLocationGathering       Set to true to enable location, false to disable
      */
     public static void setEnableLocationGathering(boolean enableLocationGathering) {
-        synchronized(QuantcastClient.enableLocationGathering) {
-            QuantcastClient.enableLocationGathering = enableLocationGathering;
+        synchronized(ENABLE_LOCATION_GATHERING) {
+            ENABLE_LOCATION_GATHERING.set(enableLocationGathering);
 
             if (enableLocationGathering) {
-                synchronized (sessionLock) {
+                synchronized (SESSION_LOCK) {
                     if (session != null) {
                         session.startLocationGathering();
                     }
@@ -324,6 +357,19 @@ public class QuantcastClient {
                 stopLocationGathering();
             }
         }
+    }
+
+    /**
+     * Control whether or not the SDK will secure data uploads using SSl/TLS.
+     * 
+     * @param usingSecureConnections    Whether or not the SDK will secure data uploads using SSl/TLS.
+     */
+    public static void setUsingSecureConnections(boolean usingSecureConnections) {
+        QuantcastClient.usingSecureConnections = usingSecureConnections;
+    }
+    
+    public static boolean isUsingSecureConnections() {
+        return usingSecureConnections;
     }
 
     /**
@@ -421,94 +467,11 @@ public class QuantcastClient {
     }
 
     static final void logLatency(UploadLatency latency) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session.logLatency(latency);
             }
         }
-    }
-
-    private static class MeasurementSession {
-
-        private final Context context;
-        private final String apiKey;
-        private final EventQueue eventQueue;
-
-        private final String userId;
-
-        private Session measurementSession;
-
-        private boolean paused;
-        private long lastPause;
-
-        public MeasurementSession(String apiKey, String userId, Context context, String[] labels) {
-            validateApiKey(apiKey);
-
-            this.userId = userId;
-            this.context = context.getApplicationContext();
-            this.apiKey = apiKey;
-
-            eventQueue = new EventQueue(new QuantcastManager(context, apiKey));
-
-            logBeginSessionEvent(BeginSessionEvent.Reason.LAUNCH, labels);
-        }
-
-        public MeasurementSession(MeasurementSession previousSession, String userId) {
-            this.context = previousSession.context;
-            this.userId = userId;
-            this.apiKey = previousSession.apiKey;
-            this.eventQueue = previousSession.eventQueue;
-            this.paused = previousSession.paused;
-            this.lastPause = previousSession.lastPause;
-
-            logBeginSessionEvent(BeginSessionEvent.Reason.USERHHASH, null);
-        }
-
-        private void logBeginSessionEvent(BeginSessionEvent.Reason reason, String[] labels) {
-            measurementSession = new Session();
-            postEvent(new BeginSessionEvent(context, measurementSession, reason, apiKey, userId, encodeLabelsForUpload(labels)));
-        }
-
-        public void logEvent(String name, String[] labels) {
-            postEvent(new AppDefinedEvent(measurementSession, name, encodeLabelsForUpload(labels)));
-        }
-
-        public void pause(String[] labels) {
-            paused = true;
-            lastPause = System.currentTimeMillis();
-            postEvent(new Event(EventType.PAUSE_SESSION, measurementSession, encodeLabelsForUpload(labels)));
-        }
-
-        public void resume(String[] labels) {
-            QuantcastGlobalControlProvider.getProvider(context).refresh();
-            if (paused && lastPause + TIME_TO_NEW_SESSION_IN_MS < System.currentTimeMillis()) {
-                logBeginSessionEvent(BeginSessionEvent.Reason.RESUME, new String[0]);
-            }
-            paused = false;
-            postEvent(new Event(EventType.RESUME_SESSION, measurementSession, encodeLabelsForUpload(labels)));
-        }
-
-        public void end(String[] labels) {
-            postEvent(new Event(EventType.END_SESSION, measurementSession, encodeLabelsForUpload(labels)));
-            eventQueue.terminate();
-        }
-
-        public void logLocation(MeasurementLocation location) {
-            postEvent(new LocationEvent(measurementSession, location));
-        }
-
-        public void logLatency(UploadLatency latency) {
-            postEvent(new LatencyEvent(measurementSession, latency));
-        }
-
-        private void postEvent(Event event) {
-            eventQueue.push(event);
-        }
-
-        public void startLocationGathering() {
-            QuantcastClient.startLocationGathering(context);
-        }
-
     }
 
     protected static void validateApiKey(String apiKey) {
@@ -523,7 +486,7 @@ public class QuantcastClient {
 
     private static LocationMonitor locationMonitor;
 
-    private static void startLocationGathering(Context context) {
+    static void startLocationGathering(Context context) {
         if (locationMonitor == null) {
             locationMonitor = new LocationMonitor(context);
             QuantcastGlobalControlProvider.getProvider(context).registerListener(locationMonitor);
@@ -533,7 +496,7 @@ public class QuantcastClient {
 
             @Override
             public void callback(GlobalControl control) {
-                if (!control.blockingEventCollection && enableLocationGathering) {
+                if (!control.blockingEventCollection && ENABLE_LOCATION_GATHERING.get()) {
                     locationMonitor.startListening();
                 }
             }
@@ -548,7 +511,7 @@ public class QuantcastClient {
     }
 
     private static void logLocation(MeasurementLocation location) {
-        synchronized (sessionLock) {
+        synchronized (SESSION_LOCK) {
             if (session != null) {
                 session.logLocation(location);
             }
@@ -562,7 +525,8 @@ public class QuantcastClient {
 
         private final Context context;
         private final Geocoder geocoder;
-        private volatile Boolean listening = false;
+        
+        private final AtomicBoolean listening = new AtomicBoolean(false);
 
         public LocationMonitor(Context context) {
             this.context = context.getApplicationContext();
@@ -618,8 +582,8 @@ public class QuantcastClient {
 
         public void startListening() {
             synchronized (listening) {
-                if (!listening) {
-                    listening = true;
+                if (!listening.get()) {
+                    listening.set(true);
 
                     LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
@@ -643,8 +607,8 @@ public class QuantcastClient {
 
         public void stopListening() {
             synchronized (listening) {
-                if (listening) {
-                    listening = false;
+                if (listening.get()) {
+                    listening.set(false);
 
                     LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
                     if (locationManager != null) {

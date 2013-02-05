@@ -29,7 +29,7 @@ import android.view.WindowManager;
 import com.quantcast.json.JsonString;
 
 @SuppressWarnings("serial")
-class BeginSessionEvent extends Event {
+class BeginSessionEvent extends BaseEvent {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(BeginSessionEvent.class);
 
@@ -74,8 +74,8 @@ class BeginSessionEvent extends Event {
     private static final String APPLICATION_ID_PARAMETER = "aid";
     private static final String ISO_COUNTRY_CODE_PARAMETER = "icc";
 
-    BeginSessionEvent(Context context, Session session, Reason reason, String apiKey, String userId, String labels) {
-        super(EventType.BEGIN_SESSION, session, labels);
+    BeginSessionEvent(Context context, String sessionId, Reason reason, String apiKey, String userId, String labels) {
+        super(QuantcastEventType.BEGIN_SESSION, sessionId, labels);
 
         put(REASON_PARAMETER, new JsonString(reason.parameterValue));
         put(API_KEY_PARAMETER, new JsonString(apiKey));
@@ -84,7 +84,7 @@ class BeginSessionEvent extends Event {
             put(PARAMETER_UH, new JsonString(QuantcastServiceUtility.applyHash(userId)));
         }
         // Put a placeholder here to be replaced by a hashed and salted DID at upload time (this sucks a little).
-        put(Event.DEVICE_ID_PARAMETER, new JsonString(""));
+        put(BaseEvent.DEVICE_ID_PARAMETER, new JsonString(""));
     }
 
     public void addAsyncParameters(Context context) {

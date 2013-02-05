@@ -15,12 +15,12 @@ import com.quantcast.json.JsonString;
 
 
 @SuppressWarnings("serial")
-class AppDefinedEvent extends Event {
+class AppDefinedEvent extends BaseEvent {
 
     private static final String EVENT_NAME_PARAMETER = "appevent";
     
-    AppDefinedEvent(Session session, String name, String labels) {
-        super(EventType.APP_DEFINED, session, labels);
+    AppDefinedEvent(String sessionId, String name, String labels) {
+        super(QuantcastEventType.APP_DEFINED, sessionId, labels);
         put(EVENT_NAME_PARAMETER, new JsonString(name));
     }
     

@@ -12,12 +12,13 @@
 package com.quantcast.measurement.service;
 
 import com.quantcast.json.RawJson;
+import com.quantcast.measurement.event.IdentifiableEvent;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 @SuppressWarnings("serial")
-class DatabaseEvent extends Event {
+class DatabaseEvent extends BaseEvent implements IdentifiableEvent {
     
     private final String eventId;
     
@@ -27,13 +28,13 @@ class DatabaseEvent extends Event {
         this.eventId = Long.toString(eventIdNum);
         
         String [] columns = new String[] {
-                EventsDatabaseHelper.EVENT_PARAMETERS_COLUMN_NAME,
-                EventsDatabaseHelper.EVENT_PARAMETERS_COLUMN_VALUE
+                DatabaseEventDAO.EVENT_PARAMETERS_COLUMN_NAME,
+                DatabaseEventDAO.EVENT_PARAMETERS_COLUMN_VALUE
         };
-        String selection = EventsDatabaseHelper.EVENT_PARAMETERS_COLUMN_EVENT_ID + "=?";
+        String selection = DatabaseEventDAO.EVENT_PARAMETERS_COLUMN_EVENT_ID + "=?";
         String[] selectionArgs = new String[] { eventId };
 
-        Cursor cursor = db.query(EventsDatabaseHelper.EVENT_PARAMETERS_TABLE,
+        Cursor cursor = db.query(DatabaseEventDAO.EVENT_PARAMETERS_TABLE,
                 columns,
                 selection, selectionArgs,
                 null, null, null);
@@ -47,7 +48,7 @@ class DatabaseEvent extends Event {
         cursor.close();
     }
     
-    public String getEventId() {
+    public String getId() {
         return eventId;
     }
 

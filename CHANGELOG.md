@@ -73,3 +73,27 @@
 
 -	The project JAR has been moved from `QuantcastService.jar` to `QuantcastAndroidSdk.jar`
 -	The project directory has been moved from `QuantcastService` to `QuantcastAndroidSdk`
+
+## Version 0.4.0 ##
+
+-	Bug fixes
+-	Added the capability to change the minimum event upload count
+-	Added the capability to enable secure data uploads
+
+### Implementation Changes ###
+
+-	To change the minimum event upload count call:
+
+	```java
+	QuantcastClient.setUploadEventCount(20)
+	```
+
+-	To enable secure data uploads call:
+
+	```java
+	QuantcastClient.setEnableLocationGathering(true);
+	```
+
+
+
+

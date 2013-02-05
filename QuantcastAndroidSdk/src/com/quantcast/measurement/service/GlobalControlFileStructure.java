@@ -1,14 +1,14 @@
 /**
-* Copyright 2012 Quantcast Corp.
-*
-* This software is licensed under the Quantcast Mobile App Measurement Terms of Service
-* https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
-* (the “License”). You may not use this file unless (1) you sign up for an account at
-* https://www.quantcast.com and click your agreement to the License and (2) are in
-*  compliance with the License. See the License for the specific language governing
-* permissions and limitations under the License.
-*
-*/       
+ * Copyright 2012 Quantcast Corp.
+ *
+ * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
+ * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
+ * (the “License”). You may not use this file unless (1) you sign up for an account at
+ * https://www.quantcast.com and click your agreement to the License and (2) are in
+ *  compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License.
+ *
+ */       
 package com.quantcast.measurement.service;
 
 import java.io.File;
@@ -25,15 +25,15 @@ import com.quantcast.settings.GlobalControlAmbassador;
 import com.quantcast.settings.GlobalControlDAO;
 
 class GlobalControlFileStructure implements GlobalControlDAO, GlobalControlAmbassador {
-    
+
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(GlobalControlFileStructure.class);
-    
+
     private static final String BASE_DIR = GlobalControlFileStructure.class.getName();
     private static final String PRESENCE_ANNOUNCEMENT_FILE_NAME = GlobalControlFileStructure.class.getName() + ".present";
     private static final String OPT_OUT_FILE_NAME = GlobalControl.class.getName() + ".blockEventCollection";
-    
+
     private final Context context;
-    
+
     public GlobalControlFileStructure(Context context) {
         this.context = context.getApplicationContext();
     }
@@ -89,7 +89,7 @@ class GlobalControlFileStructure implements GlobalControlDAO, GlobalControlAmbas
             }
         }
     }
-    
+
     @Override
     public Context getForeignContext() {
         for (PackageInfo info : context.getPackageManager().getInstalledPackages(0)) {
@@ -103,17 +103,17 @@ class GlobalControlFileStructure implements GlobalControlDAO, GlobalControlAmbas
                 catch (NameNotFoundException e) {
                     QuantcastLog.w(TAG, "Unable to create context from package name.", e);
                 }
-                
+
             }
         }
-        
+
         return null;
     }
 
     @Override
     public Queue<Context> getForeignContexts() {
         Queue<Context> foreignContexts = new LinkedList<Context>();
-        
+
         for (PackageInfo info : context.getPackageManager().getInstalledPackages(0)) {
             if (!info.packageName.equals(context.getPackageName())) {
                 try {
@@ -125,48 +125,52 @@ class GlobalControlFileStructure implements GlobalControlDAO, GlobalControlAmbas
                 catch (NameNotFoundException e) {
                     QuantcastLog.w(TAG, "Unable to create context from package name.", e);
                 }
-                
+
             }
         }
-        
+
         return foreignContexts;
     }
-    
+
     private static boolean presenceAnnounced(Context context) {
         return fileExists(context, PRESENCE_ANNOUNCEMENT_FILE_NAME);
     }
-    
+
     private static boolean fileExists(Context context, String fileName) {
         boolean fileExists = false;
-        
+
         File dir = getBaseDir(context);
         if (testValidDirExists(dir)) {
             File file = new File(dir, fileName);
             fileExists = file.exists();
         }
-        
+
         return fileExists;
     }
-    
+
     private static File getBaseDir(Context context) {
         return context.getDir(BASE_DIR, Context.MODE_WORLD_READABLE + Context.MODE_WORLD_WRITEABLE);
     }
-    
+
     private static boolean testValidDirExists(File dir) {
         boolean valid = true;
-        if (!dir.exists()) {
+        if (dir == null || !dir.exists()) {
             valid = false;
         } else {
             valid = testDirIsValid(dir);
         }
         return valid;
     }
-    
+
     private static boolean testDirIsValid(File dir) {
         boolean valid = true;
-        if (!(dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite())) {
+        if (!(dir != null && dir.exists() && dir.isDirectory() && dir.canRead() && dir.canWrite())) {
             valid = false;
-            QuantcastLog.e(TAG, "The directory (" + dir.getAbsolutePath() + ") cannot be accessed appropriately.");
+            if (dir != null) { 
+                QuantcastLog.e(TAG, "The directory (" + dir.getAbsolutePath() + ") cannot be accessed appropriately.");
+            } else {
+                QuantcastLog.e(TAG, "A null directory has could not be tested.");
+            }
         }
         return valid;
     }

@@ -32,5 +32,9 @@ public interface Policy {
     public String getSalt();
     
     public long getBlackout();
+    
+    public boolean hasSessionTimeout();
+    
+    public Long getSessionTimeout();
 
 }

@@ -17,32 +17,41 @@ import java.util.Set;
 import com.quantcast.policy.Policy;
 
 class QuantcastPolicy implements Policy {
+    
+    private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastPolicy.class);
 
     private static final String USE_NO_SALT = "MSG";
+    private static final String EMPTY_SALT = "";
 
     private Set<String> blacklist;
     private String salt;
     private long blackoutUntil;
+    private Long sessionTimeout;
 
     /**
      * @param blacklist this is expected to not be null
      * @param salt if this in null as salt of "null" will be users (use an empty String for no salt)
      */
-    public QuantcastPolicy(Set<String> blacklist, String salt, long blackoutUntil) {
+    public QuantcastPolicy(Set<String> blacklist, String salt, long blackoutUntil, Long sessionTimeout) {
         this.blacklist = blacklist;
-        if (USE_NO_SALT.equals(salt)) {
-            salt = "";
+        if (USE_NO_SALT.equals(salt) || EMPTY_SALT.equals(salt)) {
+            salt = null;
         }
         this.salt = salt;
         this.blackoutUntil = blackoutUntil;
+        if (sessionTimeout == null || sessionTimeout < 0) {
+            this.sessionTimeout = null;
+        } else {
+            this.sessionTimeout = sessionTimeout;
+        }
     }
 
     @Override
     public String encodeDeviceId(String deviceId) {
-        if (deviceId != null) {
-            return applyHash(salt + deviceId);
+        if (salt != null && deviceId != null) {
+            return QuantcastServiceUtility.applySha1Hash(salt + deviceId);
         } else {
-            return null;
+            return deviceId;
         }
     }
 
@@ -59,10 +68,6 @@ class QuantcastPolicy implements Policy {
         }
     }
 
-    public static String applyHash(String string) {
-        return QuantcastServiceUtility.applyHash(string);
-    }
-
     public Set<String> getBlacklist() {
         return blacklist;
     }
@@ -76,19 +81,64 @@ class QuantcastPolicy implements Policy {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o instanceof QuantcastPolicy) {
-            QuantcastPolicy that = (QuantcastPolicy) o;
-            return this.salt.equals(that.salt)
-                    && this.blackoutUntil == that.blackoutUntil
-                    && this.blacklist.equals(that.blacklist);
-        }
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((blacklist == null) ? 0 : blacklist.hashCode());
+        result = prime * result
+                + (int) (blackoutUntil ^ (blackoutUntil >>> 32));
+        result = prime * result + ((salt == null) ? 0 : salt.hashCode());
+        result = prime * result
+                + ((sessionTimeout == null) ? 0 : sessionTimeout.hashCode());
+        return result;
+    }
 
-        return false;
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        QuantcastPolicy other = (QuantcastPolicy) obj;
+        if (blacklist == null) {
+            if (other.blacklist != null)
+                return false;
+        }
+        else if (!blacklist.equals(other.blacklist))
+            return false;
+        if (blackoutUntil != other.blackoutUntil)
+            return false;
+        if (salt == null) {
+            if (other.salt != null)
+                return false;
+        }
+        else if (!salt.equals(other.salt))
+            return false;
+        if (sessionTimeout == null) {
+            if (other.sessionTimeout != null)
+                return false;
+        }
+        else if (!sessionTimeout.equals(other.sessionTimeout))
+            return false;
+        return true;
+    }
+
+    @Override
+    public boolean hasSessionTimeout() {
+        return sessionTimeout != null;
+    }
+
+    @Override
+    public Long getSessionTimeout() {
+        return sessionTimeout;
     }
 
     @Override
     public String toString() {
-        return super.toString() +":\nblacklist: " + getBlacklist() + "\nsalt: \"" + getSalt() + "\"\nblackout: " + getBlackout();
+        return super.toString() +":\nblacklist: " + getBlacklist() + "\nsalt: \"" + getSalt() + "\"\nblackout: " + getBlackout() + "\nsession timeout: " + getSessionTimeout();
     }
+    
 }

@@ -127,7 +127,7 @@ QuantcastClient.logEvent(eventName);
 
 #### Event Labels ####
 
-Most of Quantcast's public methods have an option to provide a comma separated list of labels. A label is any arbitrary string that you want associated with an event. The label will create a second dimension in Quantcast Measure audience reporting. Normally, this dimension is a "user class" indicator. For example, use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
+Most of Quantcast's public methods have an option to provide a single `String` label or a `String[]` of labels. A label is any arbitrary string that you want associated with an event. The label will create a second dimension in Quantcast Measure audience reporting. Normally, this dimension is a "user class" indicator. For example, use one of two labels in your app: one for user who have not purchased an app upgrade, and one for users who have purchased an upgrade.
 
 While there is no constraint on the intended use of the label dimension, it is not recommended that you use it to indicate discrete events; in these cases, use the `logEvent(eventName)` method.
 
@@ -176,5 +176,26 @@ The log level should be one of `Log.VERBOSE`, `Log.DEBUG`, `Log.INFO`, `Log.WARN
 
 Everything logged by the Quantcast Android SDK will have a tag beginning with "q.".
 
+##### Event Upload Frequency #####
+
+The Quantcast Android SDK will upload the events it collects to Quantcast's server periodically. Uploads that occur too often will drain the device's battery. Uploads that don't occur often enough will cause significant delays in Quantcast receiving the data needed for analysis and reporting. By default, these uploads occur when at least 100 events have been collected or when your application pauses (that is, it switched into the background). You can alter this default behavior via `QuantcastClient.setUploadEventCount()`. For example, if you wish to upload your app's events after 20 events have been collected, you would make the following call:
+
+```java
+QuantcastClient.setUploadEventCount(20)
+```
+
+You may change this property multiple times throughout your app's execution.
+
+##### Secure Data Uploads #####
+
+The Quantcast Android SDK can support secure data uploads using SSL/TLS. In order to enable using secure data uploads you must make the following call:
+
+```java
+QuantcastClient.setEnableLocationGathering(true);
+```
+
+Note that using secure data uploads causes your app to use encryption technology. Various jurisdictions have laws controlling the export of software applications that use encryption. Please review your jurisdiction's laws concerning exporting software that uses encryption before enabling secure data uploads in the Quantcast Android SDK.
+
 ### License ###
+
 This Quantcast Measurement SDK is Copyright 2012 Quantcast Corp. This SDK is licensed under the Quantcast Mobile App Measurement Terms of Service, found at [the Quantcast website here](https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos "Quantcast's Measurement SDK Terms of Service") (the "License"). You may not use this SDK unless (1) you sign up for an account at [Quantcast.com](https://www.quantcast.com "Quantcast.com") and click your agreement to the License and (2) are in compliance with the License. See the License for the specific language governing permissions and limitations under the License.
