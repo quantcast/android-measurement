@@ -191,7 +191,7 @@ You may change this property multiple times throughout your app's execution.
 The Quantcast Android SDK can support secure data uploads using SSL/TLS. In order to enable using secure data uploads you must make the following call:
 
 ```java
-QuantcastClient.setEnableLocationGathering(true);
+QuantcastClient.setUsingSecureConnections(true);
 ```
 
 Note that using secure data uploads causes your app to use encryption technology. Various jurisdictions have laws controlling the export of software applications that use encryption. Please review your jurisdiction's laws concerning exporting software that uses encryption before enabling secure data uploads in the Quantcast Android SDK.

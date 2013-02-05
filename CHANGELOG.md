@@ -91,7 +91,7 @@
 -	To enable secure data uploads call:
 
 	```java
-	QuantcastClient.setEnableLocationGathering(true);
+	QuantcastClient.setUsingSecureConnections(true);
 	```
 
 
