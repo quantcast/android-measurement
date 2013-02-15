@@ -93,6 +93,10 @@
 	```java
 	QuantcastClient.setUsingSecureConnections(true);
 	```
+	
+## Version 0.4.1 ##
+
+-	Smaller SDK footprint
 
 
 

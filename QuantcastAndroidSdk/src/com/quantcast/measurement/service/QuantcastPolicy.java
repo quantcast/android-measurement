@@ -18,8 +18,6 @@ import com.quantcast.policy.Policy;
 
 class QuantcastPolicy implements Policy {
     
-    private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastPolicy.class);
-
     private static final String USE_NO_SALT = "MSG";
     private static final String EMPTY_SALT = "";
 

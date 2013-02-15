@@ -1,5 +1,13 @@
 # Quantcast Android SDK #
 
+Thank you for downloading the Quantcast Android SDK! This implementation guide provides steps for integrating the SDK, so you can take advantage of valuable, actionable insights:
+
+* **Traffic Stats & Return Usage** - see your audience visitation trends
+* **Combined Web / App Audiences** - understand your aggregate audience across all screens by taking a few additional steps outlined in this guide.
+* **Labels** – segment your traffic by customizing views within your app.
+
+If you have any implementation questions, please email mobilesupport@quantcast.com. We're here to help.
+
 ## Integrating Quantcast Measure for Mobile Apps ##
 
 ### Project Setup ###
@@ -77,11 +85,11 @@ Note: for the `android update project` command described in the guide be sure to
 3.	In the `onCreate()` method of every `Activity` in your project, place the following to initialize the measurement service:
 
 	``` java
-	QuantcastClient.beginSessionWithApiKey(this, <*Insert your API Key Here*>);
+	QuantcastClient.beginSessionWithApiKeyAndWithUserId(this, <*Insert your API Key Here*>, userIdentifier);
 	```
-	Replace "<\*Insert your API Key Here\*>" with your Quantcast API Key, which can be generated in your Quantcast account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). 
+	Replace "<\*Insert your API Key Here\*>" with your Quantcast API Key, which can be generated in your Quantcast account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). The API Key is used as the basic reporting entity for Quantcast Measure. The same API Key can be used across multiple apps (i.e. AppName Free / AppName Paid) and/or app platforms (i.e. iOS / Android). For all apps under each unique API Key, Quantcast will report the aggregate audience among them all, and also identify/report on the individual app versions.
 	
-	The API Key is used as the basic reporting entity for Quantcast Measure. The same API Key can be used across multiple apps (i.e. AppName Free / AppName Paid) and/or app platforms (i.e. iOS / Android). For all apps under each unique API Key, Quantcast will report the aggregate audience among them all, and also identify/report on the individual app versions.
+	The `userIdentifier` parameter is a `String` that uniquely identifies an individual user, such as an account login. Passing this information allows Quantcast to provide reports on your combined audience across all your properties: online, mobile web and mobile app. This parameter may be `null` if your app does not have a user identifier. If the user identifier is not known at the time the `onCreate()` method is called, the user identifier can be recorded at a later time. Please see the [Combined Web/App Audiences](#combined-webapp-audiences) section for more information.
 	
 4.	In the `onDestroy()` method of every `Activity` in your project place the following to clean up the measurement service:
 
@@ -100,8 +108,10 @@ Note: for the `android update project` command described in the guide be sure to
 	``` java
 	QuantcastClient.resumeSession();
 	```
+### User Privacy ###
 
-### Optional Code Integrations ###
+#### Privacy Notification ####
+Quantcast believes in informing users of how their data is being used.  We recommend that you disclose in your privacy policy that you use Quantcast to understand your audiences. You may link to Quantcast's privacy policy [here](https://www.quantcast.com/privacy).
 
 #### User Opt-Out ####
 
@@ -113,7 +123,9 @@ QuantcastClient.showAboutQuantcastScreen(activity);
 	
 `activity` is your project's preference `Activity`.
 	
-Note: when a user opts out of Quantcast Measure, the Quantcast Android SDK immediately stops transmitting information to or from the user's device and deletes any cached information that may have retained. Furthermore, when a user opts out of a single app on a device, the action affects all apps on the device that are integrated with Quantcast Measure.
+Note: when a user opts out of Quantcast Measure, the Quantcast Android SDK immediately stops transmitting information to or from the user's device and deletes any cached information that may have retained. Furthermore, when a user opts out of a single app on a device, the action affects all other apps on the device that are integrated with Quantcast Measure the next time they are launched.
+
+### Optional Code Integrations ###
 
 #### Tracking App Events ####
 
@@ -145,22 +157,16 @@ The Quantcast Android SDK will automatically pause geo-tracking while your app i
 
 #### Combined Web/App Audiences ####
 
-Quantcast Measure enables you to measure both your web and mobile app audiences, allowing you to understand the differences and similarities of your online and mobile app audiences, or even the audiences of your different apps. To enable this feature, you will need to provide a user identifier, which Quantcast will always anonymize with a 1-way hash before it is transmitted the user's device. This user identifier must also  be provided for your website(s); please see Quantcast's web measurement documentation for instructions.
+Quantcast Measure enables you to measure your combined web and mobile app audiences, allowing you to understand the differences and similarities of your online and mobile app audiences, or even the combined audiences of your different apps. To enable this feature, you will need to provide a user identifier, which Quantcast will always anonymize with a 1-way hash before it is transmitted from the user's device. This user identifier should also be provided for your website(s); please see Quantcast's web measurement documentation for instructions.
 
-To provide Quantcast Measure with the user identifier, call the following method:
-
-``` java
-QuantcastClient.recordUserIdentifier(userId);
-```
-`userId` is a `String` containing the user identifier. The Quantcast Android SDK will immediately 1-way hash the passed identifier. A `null` `userId` indicates that the current user is unknown.
-
-When starting a Quantcast Measure session, if you already know the user identifier (e.g., it was saved in the apps preferences) when the `onCreate()` method of any `Activity` is called, you may call the alternate version of the `beginSessionWithApiKey()` method:
+Normally, your app user identifier would be provided in the `onCreate()` method of any `Activity` of your project via the `QuantcastClient.beginSessionWithApiKeyAndWithUserId()` method as described in the [Required Code Integration](#required-code-integration) section above. If the app's active user identifier changes later in the app's life cycle, you can update the user identifier using the following method call:
 
 ``` java
-QuantcastClient.beginSessionWithApiKeyAndWithUserId(this, <*Insert your API Key Here*>, userId);
+QuantcastClient.recordUserIdentifier(userIdentifier);
 ```
+The `userIdentifier` parameter is a `String` containing the user identifier.
 
-*Important*: Use of this feature requires certain notice and disclosures to your website and app users. Please see Quantcast's terms of service for more details.
+Note that in all cases, the Quantcast Android SDK will immediately 1-way hash the passed app user identifier, and return the hashed value for your reference. You do not need to take any action with the hashed value.
 
 ### SDK Customization ###
 
@@ -188,7 +194,7 @@ You may change this property multiple times throughout your app's execution.
 
 ##### Secure Data Uploads #####
 
-The Quantcast Android SDK can support secure data uploads using SSL/TLS. In order to enable using secure data uploads you must make the following call:
+The Quantcast Android SDK can support secure data uploads using SSL/TLS. In order to enable secure data uploads you must make the following call:
 
 ```java
 QuantcastClient.setUsingSecureConnections(true);

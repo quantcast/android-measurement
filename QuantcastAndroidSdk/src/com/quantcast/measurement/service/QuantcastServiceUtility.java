@@ -11,7 +11,6 @@
  */       
 package com.quantcast.measurement.service;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -25,7 +24,7 @@ class QuantcastServiceUtility {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastServiceUtility.class);
 
-    public static final String API_VERSION = "0_4_0";
+    public static final String API_VERSION = "0_4_1";
 
     private static final long[] HASH_CONSTANTS = { 0x811c9dc5, 0xc9dc5118 };
 
@@ -33,8 +32,6 @@ class QuantcastServiceUtility {
     private static final String APPLICATION_ID_PREF_NAME = "applicationId";
 
     private static final Object APPLICATION_ID_LOCK = new Object();
-
-    private static final String BASE_DIR = "com.quantcast";
 
     private static final String HTTP_SCHEME = "http://";
     private static final String HTTPS_SCHEME = "https://";
@@ -102,10 +99,6 @@ class QuantcastServiceUtility {
 
             return applicationId;
         }
-    }
-
-    public static File getBaseDirectory(Context context) {
-        return context.getDir(BASE_DIR, Context.MODE_PRIVATE);
     }
 
     public static String addScheme(String schemelessUrl) {
