@@ -98,6 +98,10 @@
 
 -	Smaller SDK footprint
 
+## Version 0.4.2 ##
+
+-	Fixed file access issue
+
 
 
 

@@ -25,6 +25,8 @@ import com.quantcast.settings.GlobalControlProvider;
 
 public class AboutQuantcastScreen extends Activity {
     
+    private static final String SAVING_THREAD_NAME = AboutQuantcastScreen.class.getName() + "#saving";
+    
     Activity activity = this;
     CheckBox optOutCheckbox;
     
@@ -52,7 +54,7 @@ public class AboutQuantcastScreen extends Activity {
                         activity.finish();
                     }
                     
-                }).start();
+                }, SAVING_THREAD_NAME).start();
             }
 
         });

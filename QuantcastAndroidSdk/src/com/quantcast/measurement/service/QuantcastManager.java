@@ -39,6 +39,8 @@ class QuantcastManager implements GlobalControlListener, EventManager {
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastManager.class);
 
     private static final int UPLOAD_WAIT_TIME_IN_MS = 30000; // 30 seconds
+    
+    private static final String DELETING_THREAD_NAME = QuantcastManager.class.getName() + "#deleting";
 
     private final Context context;
     private final EventDAO eventDAO;
@@ -172,7 +174,7 @@ class QuantcastManager implements GlobalControlListener, EventManager {
                     withEvents = false;
                 }
 
-            }).start();
+            }, DELETING_THREAD_NAME).start();
         }
     }
 

@@ -37,6 +37,13 @@ class FileUtils {
         return new File(getBaseDirectory(context), filename);
     }
     
+    /**
+     * See {@link FileUtils#openOutputStream(File)} for known compatibility.
+     * 
+     * @param file  This should not be <code>null</code>.
+     * @param string
+     * @throws IOException
+     */
     public static void writeStringToFile(File file, String string) throws IOException {
         OutputStream out = null;
         try {
@@ -47,16 +54,25 @@ class FileUtils {
         }
     }
     
+    /**
+     * This method has not yet been proven compatible for files outside an app's own context.
+     * 
+     * @param file  This should not be <code>null</code>.
+     * @return
+     * @throws IOException
+     */
     public static FileOutputStream openOutputStream(File file) throws IOException {
-        if (file.isDirectory()) {
-            throw new IOException("File " + file.getAbsolutePath() + " is a directory.");
-        }
-        if (!file.canWrite()) {
-            throw new IOException("File " + file.getAbsolutePath() + " is not readable.");
-        }
+        checkForDirectoryFile(file);
         return new FileOutputStream(file);
     }
 
+    /**
+     * See {@link FileUtils#openInputStream(File)} for compatibility.
+     * 
+     * @param file  This should not be <code>null</code>.
+     * @return
+     * @throws IOException
+     */
     public static String readFileAsString(File file) throws IOException {
         if (!file.exists()) {
             return EMPTY_STRING;
@@ -71,13 +87,15 @@ class FileUtils {
         }
     }
     
+    /**
+     * This method has not yet been proven compatible for files outside an app's own context.
+     * 
+     * @param file  This should not be <code>null</code> and should exist.
+     * @return
+     * @throws IOException
+     */
     public static FileInputStream openInputStream(File file) throws IOException {
-        if (file.isDirectory()) {
-            throw new IOException("File " + file.getAbsolutePath() + " is a directory.");
-        }
-        if (!file.canRead()) {
-            throw new IOException("File " + file.getAbsolutePath() + " is not readable.");
-        }
+        checkForDirectoryFile(file);
         return new FileInputStream(file);
     }
     
@@ -91,6 +109,12 @@ class FileUtils {
         }
         
         return stringBuilder.toString();
+    }
+    
+    public static void checkForDirectoryFile(File file) throws IOException {
+        if (file.isDirectory()) {
+            throw new IOException("File " + file.getAbsolutePath() + " is a directory.");
+        }
     }
     
     public static void closeQuietly(Closeable closeable) {

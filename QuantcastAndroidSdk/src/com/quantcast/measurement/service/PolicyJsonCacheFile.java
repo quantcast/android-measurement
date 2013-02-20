@@ -64,7 +64,7 @@ public class PolicyJsonCacheFile implements PolicyJsonCache {
             FileUtils.writeStringToFile(file, policyJsonString);
         }
         catch (IOException e) {
-            QuantcastLog.e(TAG, "Error writing the policy to the cache file.");
+            QuantcastLog.e(TAG, "Error writing the policy to the cache file.", e);
         }
 
         this.policyJsonString = policyJsonString;

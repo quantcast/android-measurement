@@ -28,6 +28,9 @@ import com.quantcast.settings.GlobalControlProvider;
 class QuantcastGlobalControlProvider implements GlobalControlProvider {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastGlobalControlProvider.class);
+    
+    private static final String INITIALIZING_THREAD_NAME = QuantcastGlobalControlProvider.class.getName() + "#initializing";
+    private static final String REFRESHING_THREAD_NAME = QuantcastGlobalControlProvider.class.getName() + "#refreshing";
 
     private static QuantcastGlobalControlProvider provider;
 
@@ -63,7 +66,7 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
                 QuantcastLog.i(TAG, "Global control provider initialization complete.");
             }
 
-        }).start();
+        }, INITIALIZING_THREAD_NAME).start();
     }
 
     private void obtainInitialControl() {
@@ -99,7 +102,7 @@ class QuantcastGlobalControlProvider implements GlobalControlProvider {
                 }
             }
 
-        }).start();
+        }, REFRESHING_THREAD_NAME).start();
     }
 
     @Override

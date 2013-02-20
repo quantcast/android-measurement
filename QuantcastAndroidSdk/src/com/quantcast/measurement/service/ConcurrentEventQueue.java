@@ -22,6 +22,8 @@ class ConcurrentEventQueue implements EventQueue {
 
     private static final long SLEEP_TIME_IN_MS = 500;
     private static final long UPLOAD_INTERVAL_IN_MS = 10 * 1000; // 10 seconds
+    
+    private static final String THREAD_NAME = ConcurrentEventQueue.class.getName();
 
     private volatile boolean continueThread;
     private final ConcurrentLinkedQueue<Event> events;
@@ -60,7 +62,7 @@ class ConcurrentEventQueue implements EventQueue {
 
                 manager.destroy();
             }
-        }).start();
+        }, THREAD_NAME).start();
     }
     
     private void setNextUploadTime() {
