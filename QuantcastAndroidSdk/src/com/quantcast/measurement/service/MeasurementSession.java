@@ -16,12 +16,13 @@ import android.content.Context;
 import com.quantcast.measurement.event.EventManager;
 import com.quantcast.measurement.event.EventQueue;
 import com.quantcast.policy.Policy;
+import com.quantcast.policy.PolicyEnforcer;
 import com.quantcast.policy.PolicyGetter;
 
 class MeasurementSession {
     
     protected static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
-
+    
     private final Context context;
     private final String apiKey;
     private final EventManager manager;
@@ -34,7 +35,26 @@ class MeasurementSession {
 
     private boolean paused;
     private long lastPause;
+    
+    private static ConcurrentEventQueue eventQueueSingleton;
+    
+    private static ConcurrentEventQueue getConcurrentEventQueue(Context context, PolicyEnforcer policyEnforcer, int minUploadSize, int maxUploadSize) {
+        if (eventQueueSingleton == null) {
+            eventQueueSingleton = new ConcurrentEventQueue(new QuantcastManager(context, policyEnforcer, minUploadSize, maxUploadSize));
+        }
+        return eventQueueSingleton;
+    }
 
+    /**
+     * This constructor is not safe for concurrent calls
+     * 
+     * @param apiKey
+     * @param userId
+     * @param context
+     * @param labels
+     * @param minUploadSize
+     * @param maxUploadSize
+     */
     public MeasurementSession(String apiKey, String userId, Context context, String[] labels, int minUploadSize, int maxUploadSize) {
         QuantcastClient.validateApiKey(apiKey);
 
@@ -44,8 +64,10 @@ class MeasurementSession {
         
         QuantcastPolicyEnforcer quantcastPolicyEnforcer = new QuantcastPolicyEnforcer(context, QuantcastServiceUtility.API_VERSION, apiKey);
         this.policyGetter = quantcastPolicyEnforcer;
-        manager = new QuantcastManager(context, quantcastPolicyEnforcer, minUploadSize, maxUploadSize);
-        eventQueue = new ConcurrentEventQueue(manager);
+        
+        ConcurrentEventQueue concurrentEventQueue = getConcurrentEventQueue(context, quantcastPolicyEnforcer, minUploadSize, maxUploadSize);
+        eventQueue = concurrentEventQueue;
+        manager = concurrentEventQueue.getEventManager();
 
         logBeginSessionEvent(BeginSessionEvent.Reason.LAUNCH, labels);
     }
@@ -63,6 +85,16 @@ class MeasurementSession {
         logBeginSessionEvent(BeginSessionEvent.Reason.USERHHASH, null);
     }
 
+    /**
+     * This is only meant for testing
+     * 
+     * @param context
+     * @param apiKey
+     * @param manager
+     * @param eventQueue
+     * @param policyGetter
+     * @param userId
+     */
     public MeasurementSession(Context context, String apiKey, EventManager manager, EventQueue eventQueue, PolicyGetter policyGetter, String userId) {
         this.context = context;
         this.apiKey = apiKey;
@@ -109,7 +141,6 @@ class MeasurementSession {
 
     public void end(String[] labels) {
         postEvent(new BaseEvent(QuantcastEventType.END_SESSION, sessionId, QuantcastClient.encodeLabelsForUpload(labels)));
-        eventQueue.terminate();
     }
 
     public void logLocation(MeasurementLocation location) {

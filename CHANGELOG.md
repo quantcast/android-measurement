@@ -102,6 +102,10 @@
 
 -	Fixed file access issue
 
+## Version 0.4.3 ##
+
+- Performance Improvements
+
 
 
 

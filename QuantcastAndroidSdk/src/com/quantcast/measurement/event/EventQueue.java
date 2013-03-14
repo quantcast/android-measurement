@@ -13,8 +13,6 @@ package com.quantcast.measurement.event;
 
 public interface EventQueue {
 
-    void terminate();
-
     void push(Event event);
 
 }

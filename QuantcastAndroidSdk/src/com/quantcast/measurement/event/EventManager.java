@@ -21,6 +21,4 @@ public interface EventManager {
 
     void saveEvents(Collection<? extends Event> events);
 
-    void destroy();
-
 }

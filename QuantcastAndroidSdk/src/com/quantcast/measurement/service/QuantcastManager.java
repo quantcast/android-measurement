@@ -179,12 +179,6 @@ class QuantcastManager implements GlobalControlListener, EventManager {
     }
 
     @Override
-    public void destroy() {
-        QuantcastLog.i(TAG, "Relinquishing resources.");
-        globalControlProvider.unregisterListener(this);
-    }
-
-    @Override
     public void callback(GlobalControl control) {
         if (control.blockingEventCollection) {
             deleteEvents();

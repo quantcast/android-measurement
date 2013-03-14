@@ -45,6 +45,9 @@ class FileUtils {
      * @throws IOException
      */
     public static void writeStringToFile(File file, String string) throws IOException {
+        if (string == null) {
+            string = EMPTY_STRING;
+        }
         OutputStream out = null;
         try {
             out = openOutputStream(file);

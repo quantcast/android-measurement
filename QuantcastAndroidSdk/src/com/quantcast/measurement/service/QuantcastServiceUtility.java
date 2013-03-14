@@ -24,7 +24,7 @@ class QuantcastServiceUtility {
 
     private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(QuantcastServiceUtility.class);
 
-    public static final String API_VERSION = "0_4_2";
+    public static final String API_VERSION = "0_4_3";
 
     private static final long[] HASH_CONSTANTS = { 0x811c9dc5, 0xc9dc5118 };
 

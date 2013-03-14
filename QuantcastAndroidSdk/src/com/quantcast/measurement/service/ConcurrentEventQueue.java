@@ -18,51 +18,24 @@ import com.quantcast.measurement.event.Event;
 import com.quantcast.measurement.event.EventManager;
 import com.quantcast.measurement.event.EventQueue;
 
-class ConcurrentEventQueue implements EventQueue {
+class ConcurrentEventQueue extends Thread implements EventQueue {
 
     private static final long SLEEP_TIME_IN_MS = 500;
     private static final long UPLOAD_INTERVAL_IN_MS = 10 * 1000; // 10 seconds
     
     private static final String THREAD_NAME = ConcurrentEventQueue.class.getName();
 
-    private volatile boolean continueThread;
-    private final ConcurrentLinkedQueue<Event> events;
+    private final ConcurrentLinkedQueue<Event> eventQueue;
+    private final EventManager eventManager;
     private long nextUploadTime;
+    private volatile boolean uploadingPaused;
 
-    public ConcurrentEventQueue(final EventManager manager) {
-        continueThread = true;
-        events = new ConcurrentLinkedQueue<Event>();
+    public ConcurrentEventQueue(EventManager manager) {
+        super(THREAD_NAME);
+        eventQueue = new ConcurrentLinkedQueue<Event>();
+        this.eventManager = manager;
         setNextUploadTime();
-        new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                do {
-                    try {
-                        Thread.sleep(SLEEP_TIME_IN_MS);
-                    }
-                    catch (InterruptedException e) {
-                        // Do nothing
-                    }
-
-                    boolean shouldForceUpload = false;
-                    LinkedList<Event> eventsToSave = new LinkedList<Event>();
-                    while (!events.isEmpty()) {
-                        Event event = events.poll();
-                        eventsToSave.add(event);
-                        shouldForceUpload |= event.getEventType().shouldForceUpload();
-                    }
-                    manager.saveEvents(eventsToSave);
-                    
-                    if (shouldForceUpload || System.currentTimeMillis() >= nextUploadTime) {
-                        setNextUploadTime();
-                        manager.attemptEventsUpload(shouldForceUpload);
-                    }
-                } while(continueThread || !events.isEmpty());
-
-                manager.destroy();
-            }
-        }, THREAD_NAME).start();
+        start();
     }
     
     private void setNextUploadTime() {
@@ -70,13 +43,53 @@ class ConcurrentEventQueue implements EventQueue {
     }
 
     @Override
-    public void terminate() {
-        continueThread = false;
-    }
-
-    @Override
     public void push(Event event) {
-        events.add(event);
+        eventQueue.add(event);
+        synchronized (this) {
+            notifyAll();
+        } 
+    }
+    
+    public EventManager getEventManager() {
+        return eventManager;
+    }
+    
+    @Override
+    public void run() {
+        do {
+            try {
+                Thread.sleep(SLEEP_TIME_IN_MS);
+                if (uploadingPaused && eventQueue.isEmpty()) {
+                    synchronized (this) {
+                        wait();
+                    }
+                }
+            }
+            catch (InterruptedException e) {
+                // Do nothing
+            }
+
+            boolean savedUploadForcingEvent = false;
+            boolean uploadingShouldBePaused = uploadingPaused;
+            LinkedList<Event> eventsToSave = new LinkedList<Event>();
+            while (!eventQueue.isEmpty()) {
+                Event event = eventQueue.poll();
+                eventsToSave.add(event);
+                savedUploadForcingEvent |= event.getEventType().isUploadForcing();
+                if (event.getEventType().isUploadPausing()) {
+                    uploadingShouldBePaused = true;
+                } else if (event.getEventType().isUploadResuming()) {
+                    uploadingShouldBePaused = false;
+                }
+            }
+            eventManager.saveEvents(eventsToSave);
+            
+            if (!(uploadingPaused && uploadingShouldBePaused) && (savedUploadForcingEvent || System.currentTimeMillis() >= nextUploadTime)) {
+                setNextUploadTime();
+                eventManager.attemptEventsUpload(savedUploadForcingEvent);
+            }
+            uploadingPaused = uploadingShouldBePaused;
+        } while(true);
     }
 
 }

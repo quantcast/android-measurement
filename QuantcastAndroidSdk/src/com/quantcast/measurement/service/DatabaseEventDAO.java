@@ -50,14 +50,23 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
 
     static final String EVENT_PARAMETERS_EVENT_ID_INDEX_NAME = "event_id_idx";
 
-    private int openDatabases;
-
+    private static final Object DATABASE_EVENT_DAO_LOCK = new Object();
+    private static volatile DatabaseEventDAO databaseEventDAO;
+    
     public static synchronized DatabaseEventDAO getDatabaseHelper(Context context) {
-        return new DatabaseEventDAO(context.getApplicationContext());
+        if (databaseEventDAO == null) {
+            synchronized (DATABASE_EVENT_DAO_LOCK) {
+                if (databaseEventDAO == null) {
+                    databaseEventDAO = new DatabaseEventDAO(context);
+                }
+            }
+        }
+        
+        return databaseEventDAO;
     }
 
     private DatabaseEventDAO(Context context) {
-        super(context, NAME, null, VERSION);
+        super(context.getApplicationContext(), NAME, null, VERSION);
     }
 
     @Override
@@ -104,25 +113,6 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
     private static void addEventIdIndex(SQLiteDatabase db) {
         String createIndex = "CREATE INDEX " + EVENT_PARAMETERS_EVENT_ID_INDEX_NAME + " ON " + EVENT_PARAMETERS_TABLE + " (" + EVENT_PARAMETERS_COLUMN_EVENT_ID + ")";
         db.execSQL(createIndex);
-    }
-
-    @Override
-    public synchronized SQLiteDatabase getReadableDatabase() {
-        openDatabases++;
-        return super.getReadableDatabase();
-    }
-
-    @Override
-    public synchronized SQLiteDatabase getWritableDatabase() {
-        openDatabases++;
-        return super.getWritableDatabase();
-    }
-
-    @Override
-    public synchronized void close() {
-        if (--openDatabases == 0) {
-            super.close();
-        }
     }
 
     @Override
@@ -184,7 +174,7 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
     }
 
     @Override
-    public void removeAllEvents() {
+    public synchronized void removeAllEvents() {
         SQLiteDatabase db = getWritableDatabase();
         try {
             try {
@@ -204,7 +194,7 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
     }
 
     @Override
-    public void writeEvents(Collection<? extends Event> events) {
+    public synchronized void writeEvents(Collection<? extends Event> events) {
         if (!events.isEmpty()) {
             SQLiteDatabase db = getWritableDatabase();
             try {

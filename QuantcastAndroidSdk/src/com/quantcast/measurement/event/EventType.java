@@ -13,7 +13,9 @@ package com.quantcast.measurement.event;
 
 public interface EventType {
 
-    boolean shouldForceUpload();
+    boolean isUploadForcing();
+    boolean isUploadPausing();
+    boolean isUploadResuming();
     String getParameterValue();
 
 }

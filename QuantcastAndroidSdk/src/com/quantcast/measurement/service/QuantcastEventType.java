@@ -14,26 +14,40 @@ package com.quantcast.measurement.service;
 import com.quantcast.measurement.event.EventType;
 
 enum QuantcastEventType implements EventType {
-    BEGIN_SESSION("load", false),
-    END_SESSION("finished", false),
-    PAUSE_SESSION("pause", true),
-    RESUME_SESSION("resume", false),
-    APP_DEFINED("appevent", false),
-    LATENCY("latency", false),
-    LOCATION("location", false), 
-    GENERIC(null, false);
+    BEGIN_SESSION("load", false, false, true),
+    END_SESSION("finished", false, true, false),
+    PAUSE_SESSION("pause", true, true, false),
+    RESUME_SESSION("resume", false, false, true),
+    APP_DEFINED("appevent", false, false, false),
+    LATENCY("latency", false, false, false),
+    LOCATION("location", false, false, false), 
+    GENERIC(null, false, false, false);
     
     private final String parameterValue;
-    public final boolean shouldForceUpload;
+    private final boolean uploadForcing;
+    private final boolean uploadPausing;
+    private final boolean uploadResuming;
 
-    private QuantcastEventType(String parameterValue, boolean shouldForceUpload) {
+    private QuantcastEventType(String parameterValue, boolean uploadForcing, boolean uploadPausing, boolean uploadResuming) {
         this.parameterValue = parameterValue;
-        this.shouldForceUpload = shouldForceUpload;
+        this.uploadForcing = uploadForcing;
+        this.uploadPausing = uploadPausing;
+        this.uploadResuming = uploadResuming;
     }
     
     @Override
-    public boolean shouldForceUpload() {
-        return shouldForceUpload;
+    public boolean isUploadForcing() {
+        return uploadForcing;
+    }
+    
+    @Override
+    public boolean isUploadPausing() {
+        return uploadPausing;
+    }
+    
+    @Override
+    public boolean isUploadResuming() {
+        return uploadResuming;
     }
 
     @Override
