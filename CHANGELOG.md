@@ -106,6 +106,10 @@
 
 - Performance Improvements
 
+## Version 0.4.4 ##
+
+- Stability improvements and bug fixes
+
 
 
 

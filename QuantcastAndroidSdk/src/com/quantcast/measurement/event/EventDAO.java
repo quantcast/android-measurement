@@ -11,6 +11,8 @@
 */
 package com.quantcast.measurement.event;
 
+import android.content.Context;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -24,4 +26,5 @@ public interface EventDAO {
 
     void writeEvents(Collection<? extends Event> events);
 
+    void deleteDB(Context context);
 }

@@ -19,5 +19,12 @@ local.properties
 .classpath
 .project
 
+# Stupid .DS_Store
+.DS_Store
+
 # Release Prep Files
 build.xml
+
+#Intellij Junk
+.idea/
+*.iml

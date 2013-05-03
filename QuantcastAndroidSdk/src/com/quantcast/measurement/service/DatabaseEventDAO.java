@@ -251,4 +251,14 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
             }
         }
     }
+
+    @Override
+    public synchronized void deleteDB(Context context) {
+        SQLiteDatabase db = getWritableDatabase();
+        String path = db.getPath();
+        if(db.isOpen()){
+            db.close();
+            context.deleteDatabase(path);
+        }
+    }
 }

@@ -14,6 +14,7 @@ package com.quantcast.measurement.service;
 import java.util.LinkedList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import android.database.sqlite.SQLiteDatabaseCorruptException;
 import com.quantcast.measurement.event.Event;
 import com.quantcast.measurement.event.EventManager;
 import com.quantcast.measurement.event.EventQueue;
@@ -69,26 +70,36 @@ class ConcurrentEventQueue extends Thread implements EventQueue {
                 // Do nothing
             }
 
-            boolean savedUploadForcingEvent = false;
-            boolean uploadingShouldBePaused = uploadingPaused;
-            LinkedList<Event> eventsToSave = new LinkedList<Event>();
-            while (!eventQueue.isEmpty()) {
-                Event event = eventQueue.poll();
-                eventsToSave.add(event);
-                savedUploadForcingEvent |= event.getEventType().isUploadForcing();
-                if (event.getEventType().isUploadPausing()) {
-                    uploadingShouldBePaused = true;
-                } else if (event.getEventType().isUploadResuming()) {
-                    uploadingShouldBePaused = false;
+            try{
+                boolean savedUploadForcingEvent = false;
+                boolean uploadingShouldBePaused = uploadingPaused;
+                LinkedList<Event> eventsToSave = new LinkedList<Event>();
+                while (!eventQueue.isEmpty()) {
+                    Event event = eventQueue.poll();
+                    eventsToSave.add(event);
+                    savedUploadForcingEvent |= event.getEventType().isUploadForcing();
+                    if (event.getEventType().isUploadPausing()) {
+                        uploadingShouldBePaused = true;
+                    } else if (event.getEventType().isUploadResuming()) {
+                        uploadingShouldBePaused = false;
+                    }
                 }
+                eventManager.saveEvents(eventsToSave);
+
+                if (!(uploadingPaused && uploadingShouldBePaused) && (savedUploadForcingEvent || System.currentTimeMillis() >= nextUploadTime)) {
+                    setNextUploadTime();
+                    eventManager.attemptEventsUpload(savedUploadForcingEvent);
+                }
+                uploadingPaused = uploadingShouldBePaused;
+            } catch(SQLiteDatabaseCorruptException e) {
+                //delete entire DB
+                eventQueue.clear();
+                eventManager.deleteDB();
+            } catch (Exception e) {
+                //clean up last calls and keep the loop going
+                eventQueue.clear();
+
             }
-            eventManager.saveEvents(eventsToSave);
-            
-            if (!(uploadingPaused && uploadingShouldBePaused) && (savedUploadForcingEvent || System.currentTimeMillis() >= nextUploadTime)) {
-                setNextUploadTime();
-                eventManager.attemptEventsUpload(savedUploadForcingEvent);
-            }
-            uploadingPaused = uploadingShouldBePaused;
         } while(true);
     }
 

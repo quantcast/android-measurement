@@ -103,7 +103,7 @@ class QuantcastManager implements GlobalControlListener, EventManager {
     @Override
     public void attemptEventsUpload(final boolean shouldForceUpload) {
         final long currentTime = System.currentTimeMillis();
-        if (currentTime >= nextTimeUploadAllowed) {
+        if (currentTime >= nextTimeUploadAllowed || shouldForceUpload) {
             boolean shouldDoUpload = uploadInProgress.compareAndSet(false, true);
 
             if (shouldDoUpload) {
@@ -147,6 +147,14 @@ class QuantcastManager implements GlobalControlListener, EventManager {
                 eventDAO.writeEvents(events);
             }
         }
+    }
+
+    @Override
+    public void deleteDB() {
+        eventDAO.deleteDB(context);
+        //make sure we reset so next upload can take place
+        uploadInProgress.set(false);
+        nextTimeUploadAllowed = System.currentTimeMillis() + UPLOAD_WAIT_TIME_IN_MS;
     }
 
     /**
