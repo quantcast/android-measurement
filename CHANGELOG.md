@@ -110,6 +110,10 @@
 
 - Stability improvements and bug fixes
 
+## Version 0.4.5 ##
+
+- Stability improvement
+
 
 
 

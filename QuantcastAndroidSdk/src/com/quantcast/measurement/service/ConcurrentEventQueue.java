@@ -98,7 +98,12 @@ class ConcurrentEventQueue extends Thread implements EventQueue {
             } catch (Exception e) {
                 //clean up last calls and keep the loop going
                 eventQueue.clear();
-
+            }catch (OutOfMemoryError oom){
+                eventQueue.clear();
+                System.gc();  //try to force a garbage collection and recover
+            }catch (Throwable t){
+                //catchall clean and try to recover
+                eventQueue.clear();
             }
         } while(true);
     }
