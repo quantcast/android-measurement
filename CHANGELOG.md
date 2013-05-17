@@ -114,6 +114,8 @@
 
 - Stability improvement
 
+## Version 0.4.6 ##
 
+- Github issue #1 fix: Null check for location
 
 

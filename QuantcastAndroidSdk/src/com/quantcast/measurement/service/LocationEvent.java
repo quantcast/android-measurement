@@ -23,10 +23,16 @@ class LocationEvent extends BaseEvent {
     
     public LocationEvent(String sessionId, MeasurementLocation location) {
         super(QuantcastEventType.LOCATION, sessionId);
-        
-        put(PARAMETER_COUNTRY, new JsonString(location.getCountry()));
-        put(PARAMETER_STATE, new JsonString(location.getState()));
-        put(LOCALITY_PARAMETER, new JsonString(location.getLocality()));
+
+        if(location.getCountry() != null) {
+            put(PARAMETER_COUNTRY, new JsonString(location.getCountry()));
+        }
+        if(location.getState() != null){
+            put(PARAMETER_STATE, new JsonString(location.getState()));
+        }
+        if(location.getLocality() != null){
+            put(LOCALITY_PARAMETER, new JsonString(location.getLocality()));
+        }
     }
 
 }
