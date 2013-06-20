@@ -19,8 +19,13 @@ import com.quantcast.policy.Policy;
 import com.quantcast.policy.PolicyEnforcer;
 import com.quantcast.policy.PolicyGetter;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.regex.Pattern;
+
 class MeasurementSession {
-    
+
+    private static final QuantcastLog.Tag TAG = new QuantcastLog.Tag(MeasurementSession.class);
     protected static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
     
     private final Context context;
@@ -29,13 +34,16 @@ class MeasurementSession {
     private final EventQueue eventQueue;
     private final PolicyGetter policyGetter;
 
+    private QuantcastLocationManager _locationManager;
+
     private final String userId;
 
     private String sessionId;
 
     private boolean paused;
     private long lastPause;
-    
+
+    private static final Pattern apiKeyPattern = Pattern.compile("[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
     private static ConcurrentEventQueue eventQueueSingleton;
     
     private static ConcurrentEventQueue getConcurrentEventQueue(Context context, PolicyEnforcer policyEnforcer, int minUploadSize, int maxUploadSize) {
@@ -56,7 +64,7 @@ class MeasurementSession {
      * @param maxUploadSize
      */
     public MeasurementSession(String apiKey, String userId, Context context, String[] labels, int minUploadSize, int maxUploadSize) {
-        QuantcastClient.validateApiKey(apiKey);
+        validateApiKey(apiKey);
 
         this.userId = userId;
         this.context = context.getApplicationContext();
@@ -106,25 +114,26 @@ class MeasurementSession {
 
     private void logBeginSessionEvent(BeginSessionEvent.Reason reason, String[] labels) {
         sessionId = QuantcastServiceUtility.generateUniqueId();;
-        postEvent(new BeginSessionEvent(context, sessionId, reason, apiKey, userId, QuantcastClient.encodeLabelsForUpload(labels)));
+        postEvent(new BeginSessionEvent(context, sessionId, reason, apiKey, userId, encodeLabelsForUpload(labels)));
     }
 
     public void logEvent(String name, String[] labels) {
-        postEvent(new AppDefinedEvent(sessionId, name, QuantcastClient.encodeLabelsForUpload(labels)));
+        postEvent(new AppDefinedEvent(sessionId, name, encodeLabelsForUpload(labels)));
     }
 
     public void pause(String[] labels) {
         paused = true;
         lastPause = System.currentTimeMillis();
-        postEvent(new BaseEvent(QuantcastEventType.PAUSE_SESSION, sessionId, QuantcastClient.encodeLabelsForUpload(labels)));
+        postEvent(new BaseEvent(QuantcastEventType.PAUSE_SESSION, sessionId, encodeLabelsForUpload(labels)));
     }
 
     public void resume(String[] labels) {
         QuantcastGlobalControlProvider.getProvider(context).refresh();
-        postEvent(new BaseEvent(QuantcastEventType.RESUME_SESSION, sessionId, QuantcastClient.encodeLabelsForUpload(labels)));
+        postEvent(new BaseEvent(QuantcastEventType.RESUME_SESSION, sessionId, encodeLabelsForUpload(labels)));
         if (paused && lastPause + getSessionTimeoutInMs() < System.currentTimeMillis()) {
             logBeginSessionEvent(BeginSessionEvent.Reason.RESUME, new String[0]);
         }
+        this.updateLocation();
         paused = false;
     }
     
@@ -140,7 +149,7 @@ class MeasurementSession {
     }
 
     public void end(String[] labels) {
-        postEvent(new BaseEvent(QuantcastEventType.END_SESSION, sessionId, QuantcastClient.encodeLabelsForUpload(labels)));
+        postEvent(new BaseEvent(QuantcastEventType.END_SESSION, sessionId, encodeLabelsForUpload(labels)));
     }
 
     public void logLocation(MeasurementLocation location) {
@@ -156,10 +165,26 @@ class MeasurementSession {
     }
 
     public void startLocationGathering() {
-        QuantcastClient.startLocationGathering(context);
+        //make the location manager.  it will kick in on start.
+        if( null == _locationManager ){
+            _locationManager = new QuantcastLocationManager(context, this);
+        }
     }
 
-    public void setUplaodEventCount(int uploadEventCount) {
+    private void updateLocation(){
+        if( null != _locationManager){
+            _locationManager.start();
+        }
+    }
+
+    public void stopLocationGathering(){
+        if(null != _locationManager){
+            _locationManager.stop();
+            _locationManager = null;
+        }
+    }
+
+    public void setUploadEventCount(int uploadEventCount) {
         manager.setMinUploadSize(uploadEventCount);
     }
 
@@ -191,4 +216,40 @@ class MeasurementSession {
         return userId;
     }
 
+    private String encodeLabelsForUpload(String[] labels) {
+        String labelsString = null;
+
+        if (labels != null && labels.length > 0) {
+            StringBuilder labelBuffer = new StringBuilder();
+
+            try {
+                for (String label : labels) {
+                    String encoded = URLEncoder.encode(label, "UTF-8");
+                    if (labelBuffer.length() == 0) {
+                        labelBuffer.append(encoded);
+                    } else {
+                        labelBuffer.append(",").append(label);
+                    }
+                }
+            } catch (UnsupportedEncodingException e) {
+                QuantcastLog.e(TAG, "Unable to encode event labels", e);
+                return null;
+            }
+
+            labelsString = labelBuffer.toString();
+        }
+
+        return labelsString;
+    }
+
+
+    private void validateApiKey(String apiKey) {
+        if (apiKey == null) {
+            throw new IllegalArgumentException("No Quantcast API Key was passed to the SDK. Please use the API Key provided to you by Quantcast.");
+        }
+
+        if (!apiKeyPattern.matcher(apiKey).matches()) {
+            throw new IllegalArgumentException("The Quantcast API Key passed to the SDK is malformed. Please use the API Key provided to you by Quantcast.");
+        }
+    }
 }

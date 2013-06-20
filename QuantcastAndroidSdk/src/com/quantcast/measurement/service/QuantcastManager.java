@@ -61,10 +61,12 @@ class QuantcastManager implements GlobalControlListener, EventManager {
      * Constructor.
      * Must be called from service thread.
      *
-     * @param apiKey            The apiKey provided by the developer
      * @param context           A context to use for resources
+     * @param policyEnforcer    Policy enforcer
+     * @param minUploadSize     min number before upload
+     * @param maxUploadSize     max number of save events
      */
-    QuantcastManager(Context context, PolicyEnforcer policyEnforcer, int minUplaodSize, int maxUploadSize) {
+    QuantcastManager(Context context, PolicyEnforcer policyEnforcer, int minUploadSize, int maxUploadSize) {
         context = context.getApplicationContext();
         this.context = context;
         this.policyEnforcer = policyEnforcer;
@@ -76,7 +78,7 @@ class QuantcastManager implements GlobalControlListener, EventManager {
         globalControlProvider.registerListener(this);
         
         this.maxUploadSize = maxUploadSize;
-        this.minUploadSize = minUplaodSize;
+        this.minUploadSize = minUploadSize;
         
         this.uploader = new QuantcastUploader();
     }
@@ -117,7 +119,7 @@ class QuantcastManager implements GlobalControlListener, EventManager {
 
                             if (eventsToUpload.size() >= minUploadSize || shouldForceUpload) {
                                 nextTimeUploadAllowed = currentTime + UPLOAD_WAIT_TIME_IN_MS;
-                                
+
                                 QuantcastLog.i(TAG, "Uploading " + eventsToUpload.size() + " events.");
                                 if(uploader.uploadEvents(context, eventsToUpload, policyEnforcer)) {
                                     eventDAO.removeEvents(eventsToUpload);

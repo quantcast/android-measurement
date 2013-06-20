@@ -60,12 +60,13 @@ class QuantcastDeviceInfoProvider implements DeviceInfoProvider {
             }
         }
 
-        return telephonyId;
+        return (telephonyId==null ? "" : telephonyId);
     }
 
     private String getAndroidId() {
         String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        if (androidId == null) {
+        //checks for the fake androidID returned on some Froyo devices
+        if (androidId == null || androidId.equals("9774d56d682e549c")) {
             androidId = "";
         }
 

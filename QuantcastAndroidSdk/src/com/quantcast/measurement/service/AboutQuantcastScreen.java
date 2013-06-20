@@ -38,7 +38,7 @@ public class AboutQuantcastScreen extends Activity {
         optOutCheckbox = new CheckBox(activity);
         Button proceedButton = new Button(activity);
         View view = ResourceHelper.getDialogView(activity, proceedButton, optOutCheckbox);
-        
+
         proceedButton.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -68,7 +68,7 @@ public class AboutQuantcastScreen extends Activity {
         }
         
         setTitle(ResourceHelper.DIALOG_TITLE);
-    };
+    }
     
     @Override
     protected void onPause() {

@@ -178,6 +178,7 @@ class DatabaseEventDAO extends SQLiteOpenHelper implements EventDAO {
         SQLiteDatabase db = getWritableDatabase();
         try {
             try {
+                db.beginTransaction();
                 // Remove all rows
                 db.delete(EVENT_PARAMETERS_TABLE, null, null);
                 db.delete(EVENTS_TABLE, null, null);

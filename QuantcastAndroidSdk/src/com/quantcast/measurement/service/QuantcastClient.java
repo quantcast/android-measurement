@@ -11,27 +11,15 @@
  */       
 package com.quantcast.measurement.service;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.regex.Pattern;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Address;
-import android.location.Geocoder;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Bundle;
 
 import com.quantcast.settings.GlobalControl;
 import com.quantcast.settings.GlobalControlListener;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Client API for Quantcast Measurement service.
@@ -51,23 +39,20 @@ public class QuantcastClient {
      */
     public static final int DEFAULT_UPLOAD_EVENT_COUNT = 100;
 
-    private static final Pattern apiKeyPattern = Pattern.compile("[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
 
     private static MeasurementSession session;
     private static final Object SESSION_LOCK = new Object();
 
-    private static final AtomicBoolean ENABLE_LOCATION_GATHERING = new AtomicBoolean(false);
-
     private static int uploadEventCount = DEFAULT_UPLOAD_EVENT_COUNT;
 
-    public static Set<Integer> activeContexts;
+    private static Set<Integer> activeContexts;
 
     private static volatile boolean usingSecureConnections = false;
 
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      */
     public static void beginSessionWithApiKey(Activity activity, String apiKey) {
@@ -77,7 +62,7 @@ public class QuantcastClient {
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param label                 A label for the event.
      */
@@ -88,7 +73,7 @@ public class QuantcastClient {
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param labels                An array of labels for the event.
      */
@@ -99,7 +84,7 @@ public class QuantcastClient {
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId                A consistent identifier for the current user.
      *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
@@ -112,7 +97,7 @@ public class QuantcastClient {
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId                A consistent identifier for the current user.
      *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
@@ -126,7 +111,7 @@ public class QuantcastClient {
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.
      *
-     * @param context               Main Activity using the Quantcast Measurement API
+     * @param activity               Main Activity using the Quantcast Measurement API
      * @param apiKey                The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId                A consistent identifier for the current user.
      *                              Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
@@ -145,7 +130,6 @@ public class QuantcastClient {
                 QuantcastLog.i(TAG, "Initializing new session.");
                 QuantcastGlobalControlProvider.getProvider(activity).refresh();
                 session = new MeasurementSession(apiKey, userId, activity, labels, uploadEventCount, MAX_UPLOAD_SIZE);
-                startLocationGathering(activity);
                 QuantcastLog.i(TAG, "New session initialization complete.");
             }
         }
@@ -308,7 +292,6 @@ public class QuantcastClient {
                 QuantcastLog.i(TAG, "No active contexts.");
             }
             if (activeContexts == null || activeContexts.isEmpty()) {
-                stopLocationGathering();
                 if (session != null) {
                     session.end(labels);
                 }
@@ -330,7 +313,7 @@ public class QuantcastClient {
             synchronized (SESSION_LOCK) {
                 QuantcastClient.uploadEventCount = uploadEventCount;
                 if (session != null) {
-                    session.setUplaodEventCount(uploadEventCount);
+                    session.setUploadEventCount(uploadEventCount);
                 }
             }
         } else {
@@ -344,17 +327,15 @@ public class QuantcastClient {
      * @param enableLocationGathering       Set to true to enable location, false to disable
      */
     public static void setEnableLocationGathering(boolean enableLocationGathering) {
-        synchronized(ENABLE_LOCATION_GATHERING) {
-            ENABLE_LOCATION_GATHERING.set(enableLocationGathering);
-
-            if (enableLocationGathering) {
-                synchronized (SESSION_LOCK) {
-                    if (session != null) {
-                        session.startLocationGathering();
-                    }
+        synchronized (SESSION_LOCK) {
+            if (session != null) {
+                if (enableLocationGathering) {
+                    session.startLocationGathering();
+                }else{
+                    session.stopLocationGathering();
                 }
-            } else {
-                stopLocationGathering();
+            }else{
+                QuantcastLog.e(TAG, "beginSessionWithApiKey must be called before location logging can be enabled. ");
             }
         }
     }
@@ -440,32 +421,6 @@ public class QuantcastClient {
         // Do nothing
     }
 
-    protected static String encodeLabelsForUpload(String[] labels) {
-        String labelsString = null;
-
-        if (labels != null && labels.length > 0) {
-            StringBuffer labelBuffer = new StringBuffer();
-
-            try {
-                for (String label : labels) {
-                    String encoded = URLEncoder.encode(label, "UTF-8");
-                    if (labelBuffer.length() == 0) {
-                        labelBuffer.append(encoded);
-                    } else {
-                        labelBuffer.append("," + label);
-                    }
-                }
-            } catch (UnsupportedEncodingException e) {
-                QuantcastLog.e(TAG, "Unable to encode event labels", e);
-                return null;
-            }
-
-            labelsString = labelBuffer.toString();
-        }
-
-        return labelsString;
-    }
-
     static final void logLatency(UploadLatency latency) {
         synchronized (SESSION_LOCK) {
             if (session != null) {
@@ -474,155 +429,4 @@ public class QuantcastClient {
         }
     }
 
-    protected static void validateApiKey(String apiKey) {
-        if (apiKey == null) {
-            throw new IllegalArgumentException("No Quantcast API Key was passed to the SDK. Please use the API Key provided to you by Quantcast.");
-        }
-
-        if (!apiKeyPattern.matcher(apiKey).matches()) {
-            throw new IllegalArgumentException("The Quantcast API Key passed to the SDK is malformed. Please use the API Key provided to you by Quantcast.");
-        }
-    }
-
-    private static LocationMonitor locationMonitor;
-
-    static void startLocationGathering(Context context) {
-        if (locationMonitor == null) {
-            locationMonitor = new LocationMonitor(context);
-            QuantcastGlobalControlProvider.getProvider(context).registerListener(locationMonitor);
-        }
-
-        QuantcastGlobalControlProvider.getProvider(context).getControl(new GlobalControlListener() {
-
-            @Override
-            public void callback(GlobalControl control) {
-                if (!control.blockingEventCollection && ENABLE_LOCATION_GATHERING.get()) {
-                    locationMonitor.startListening();
-                }
-            }
-
-        });
-    }
-
-    private static void stopLocationGathering() {
-        if (locationMonitor != null) {
-            locationMonitor.stopListening();
-        }
-    }
-
-    private static void logLocation(MeasurementLocation location) {
-        synchronized (SESSION_LOCK) {
-            if (session != null) {
-                session.logLocation(location);
-            }
-        }
-    }
-
-    private static class LocationMonitor implements LocationListener, GlobalControlListener {
-
-        private static final long MIN_LOC_UPDATE_TIME_IN_MS = 5 * 60 * 1000; // 5 minutes
-        private static final float MIN_LOC_UPDATE_DISTANCE_IN_M = 8000; // 8km ~= 5 miles
-
-        private final Context context;
-        private final Geocoder geocoder;
-        
-        private final AtomicBoolean listening = new AtomicBoolean(false);
-
-        public LocationMonitor(Context context) {
-            this.context = context.getApplicationContext();
-            geocoder = new Geocoder(context);
-        }
-
-        @Override
-        public void onLocationChanged(Location location) {
-            QuantcastLog.i(TAG, "Location changed");
-            logLocation(location);
-        }
-
-        private void logLocation(Location location) {
-            double latitude = location.getLatitude();
-            double longitude = location.getLongitude();
-
-            QuantcastLog.i(TAG, "Looking for address.");
-            try {
-                List<Address> addresses = geocoder.getFromLocation(latitude,longitude, 1);
-                if(addresses != null && addresses.size() > 0) {
-                    Address address = addresses.get(0);
-                    QuantcastClient.logLocation(new MeasurementLocation(address.getCountryCode(), address.getAdminArea(), address.getLocality()));
-                } else {
-                    QuantcastLog.i(TAG, "Geocoder reverse lookup failed.");
-                }
-            }
-            catch (IOException e) {
-                QuantcastLog.i(TAG, "Geocoder API not available.");
-                // call googles map api directly
-                GeoInfo geoInfo = ReverseGeocoder.lookup(latitude, longitude);
-                if(geoInfo != null) {
-                    QuantcastClient.logLocation(new MeasurementLocation(geoInfo.country, geoInfo.state, geoInfo.locality));
-                } else {
-                    QuantcastLog.i(TAG, "Google Maps API reverse lookup failed.");
-                }
-            }
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            // Do nothing
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            // Do nothing
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            // Do nothing
-        }
-
-        public void startListening() {
-            synchronized (listening) {
-                if (!listening.get()) {
-                    listening.set(true);
-
-                    LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-
-                    if (locationManager != null) {
-                        Location mostRecent = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                        if (mostRecent != null) {
-                            logLocation(mostRecent);
-                        } else {
-                            mostRecent = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-                            if (mostRecent != null) {
-                                logLocation(mostRecent);
-                            }
-                        }
-
-                        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, MIN_LOC_UPDATE_TIME_IN_MS, MIN_LOC_UPDATE_DISTANCE_IN_M, this);
-                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, MIN_LOC_UPDATE_TIME_IN_MS, MIN_LOC_UPDATE_DISTANCE_IN_M, this);
-                    }
-                }
-            }
-        }
-
-        public void stopListening() {
-            synchronized (listening) {
-                if (listening.get()) {
-                    listening.set(false);
-
-                    LocationManager locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
-                    if (locationManager != null) {
-                        locationManager.removeUpdates(this);
-                    }
-                }
-            }
-        }
-
-        @Override
-        public void callback(GlobalControl control) {
-            if (control.blockingEventCollection) {
-                stopListening();
-            }
-        }
-    }
 }
