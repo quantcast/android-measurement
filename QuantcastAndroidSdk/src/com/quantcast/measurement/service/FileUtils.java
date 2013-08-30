@@ -103,15 +103,24 @@ class FileUtils {
     }
     
     public static String extractStringFromInputStream(InputStream input) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
+        BufferedReader br = null;
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+
+        try {
+            br = new BufferedReader( new InputStreamReader( input ) );
+
+            while ( ( line = br.readLine() ) != null) {
+                sb.append( line );
+            }
+
+        } catch ( final IOException e ) {
+            // TODO: Handle exception
+        } finally {
+            closeQuietly( br );
         }
-        
-        return stringBuilder.toString();
+
+        return sb.toString();
     }
     
     public static void checkForDirectoryFile(File file) throws IOException {
