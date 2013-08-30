@@ -57,18 +57,13 @@ Note: for the `android update project` command described in the guide be sure to
 	``` xml
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
 	
-	You can optionally add the following permissions to gather more information about your user base:
+	You can optionally add the following permission to gather more information about your user base:
 	
 	``` xml
 	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-	```
-	
-	and
-	
-	``` xml
-	<uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
 
 	Also add the following lines within the `<application>` tag to allow the `AboutQuantcastScreen` to show:
@@ -77,37 +72,38 @@ Note: for the `android update project` command described in the guide be sure to
 	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
 	</activity>
 	```
-2.	Import the `QuantcastClient` into every `Activity` in your project by adding the following import:
+    
+    Finally to collect referrer data from the Google Play Store add the following lines within the `<application>` tag:
+    ```xml
+    <receiver android:name="com.quantcast.measurement.service.QCReferrerReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.vending.INSTALL_REFERRER" />
+            </intent-filter>
+        </receiver>
+    ```
+    
+2.	Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
 
 	``` java
 	import com.quantcast.measurement.service.QuantcastClient;
 	```
-3.	In the `onCreate()` method of every `Activity` in your project, place the following to initialize the measurement service:
+3.	In the `onStart()` method of **_every_** `Activity` in your project, place the following to initialize the measurement service:
 
 	``` java
-	QuantcastClient.beginSessionWithApiKeyAndWithUserId(this, <*Insert your API Key Here*>, userIdentifier);
+	QuantcastClient.activityStart(this, <*Insert your API Key Here*>, userIdentifier, labels);
 	```
 	Replace "<\*Insert your API Key Here\*>" with your Quantcast API Key, which can be generated in your Quantcast account homepage on [the Quantcast website](http://www.quantcast.com "Quantcast.com"). The API Key is used as the basic reporting entity for Quantcast Measure. The same API Key can be used across multiple apps (i.e. AppName Free / AppName Paid) and/or app platforms (i.e. iOS / Android). For all apps under each unique API Key, Quantcast will report the aggregate audience among them all, and also identify/report on the individual app versions.
 	
-	The `userIdentifier` parameter is a `String` that uniquely identifies an individual user, such as an account login. Passing this information allows Quantcast to provide reports on your combined audience across all your properties: online, mobile web and mobile app. This parameter may be `null` if your app does not have a user identifier. If the user identifier is not known at the time the `onCreate()` method is called, the user identifier can be recorded at a later time. Please see the [Combined Web/App Audiences](#combined-webapp-audiences) section for more information.
+	The `userIdentifier` parameter is a `String` that uniquely identifies an individual user, such as an account login. This should not be confused with a unique device identifier. Passing this information allows Quantcast to provide reports on your combined audience across all your properties: online, mobile web and mobile app. This parameter may be `null` if your app does not have a user identifier. If the user identifier is not known at the time the `onCreate()` method is called, the user identifier can be recorded at a later time. Please see the [Combined Web/App Audiences](#combined-webapp-audiences) section for more information.
+    
+    The `labels` parameter may be nil and is discussed in more detail in the [Event Labels](#event-labels) section under Optional Code Integrations.
 	
-4.	In the `onDestroy()` method of every `Activity` in your project place the following to clean up the measurement service:
+4.	In the `onStop()` method of **_every_** `Activity` in your project place the following :
 
 	``` java
-	QuantcastClient.endSession(this);
+	QuantcastClient.activityStop();
 	```
-	
-5.	In the `onPause()` method of every `Activity` in your project place the following:
 
-	``` java
-	QuantcastClient.pauseSession();
-	```
-	
-6.	In the `onResume()` method of every `Activity` in your project place the following:
-
-	``` java
-	QuantcastClient.resumeSession();
-	```
 ### User Privacy ###
 
 #### Privacy Notification ####
@@ -168,6 +164,15 @@ The `userIdentifier` parameter is a `String` containing the user identifier.
 
 Note that in all cases, the Quantcast Android SDK will immediately 1-way hash the passed app user identifier, and return the hashed value for your reference. You do not need to take any action with the hashed value.
 
+#### De-Duplicating Web Traffic ####
+
+Sometimes you might want to direct a user to a webpage within your mobile application.  If the webpage already tagged with a Quantcast Web Tag, then that user may mistakenly be counted as a mobile app user as well as a mobile web user.   In order to get the best possible measurement on all platforms, you should get all your WebViews using this call:
+``` java
+QuantcastClient.newDeduplicatedWebView(this);
+```
+
+This will return a Webview specially tagged to stop duplications.   If you need to extend a webview you can also extend `QCDeduplicatedWebView` instead of a normal WebView.
+
 ### SDK Customization ###
 
 #### Logging and Debugging ####
@@ -175,10 +180,8 @@ Note that in all cases, the Quantcast Android SDK will immediately 1-way hash th
 You may enable logging within the Quantcast Android SDK for debugging purposes. By default, logging is turned off. To enable logging, set the log level of the Quantcast Android SDK by calling:
 
 ``` java
-QuantcastClient.setLogLevel(Log.VERBOSE);
+QuantcastClient.enableLogging(true);
 ```
-
-The log level should be one of `Log.VERBOSE`, `Log.DEBUG`, `Log.INFO`, `Log.WARN`, `Log.ERROR`. The default log level for the Quantcast Android SDK is `Log.ERROR`.
 
 Everything logged by the Quantcast Android SDK will have a tag beginning with "q.".
 
@@ -205,3 +208,4 @@ Note that using secure data uploads causes your app to use encryption technology
 ### License ###
 
 This Quantcast Measurement SDK is Copyright 2012 Quantcast Corp. This SDK is licensed under the Quantcast Mobile App Measurement Terms of Service, found at [the Quantcast website here](https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos "Quantcast's Measurement SDK Terms of Service") (the "License"). You may not use this SDK unless (1) you sign up for an account at [Quantcast.com](https://www.quantcast.com "Quantcast.com") and click your agreement to the License and (2) are in compliance with the License. See the License for the specific language governing permissions and limitations under the License.
+

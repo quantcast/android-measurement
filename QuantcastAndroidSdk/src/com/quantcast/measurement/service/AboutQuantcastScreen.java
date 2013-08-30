@@ -1,107 +1,122 @@
 /**
-* Copyright 2012 Quantcast Corp.
-*
-* This software is licensed under the Quantcast Mobile App Measurement Terms of Service
-* https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
-* (the “License”). You may not use this file unless (1) you sign up for an account at
-* https://www.quantcast.com and click your agreement to the License and (2) are in
-*  compliance with the License. See the License for the specific language governing
-* permissions and limitations under the License.
-*
-*/       
+ * Copyright 2012 Quantcast Corp.
+ *
+ * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
+ * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
+ * (the “License”). You may not use this file unless (1) you sign up for an account at
+ * https://www.quantcast.com and click your agreement to the License and (2) are in
+ *  compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License.
+ *
+ */
 package com.quantcast.measurement.service;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.StateListDrawable;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.Window;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-
-import com.quantcast.settings.GlobalControl;
-import com.quantcast.settings.GlobalControlListener;
-import com.quantcast.settings.GlobalControlProvider;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 public class AboutQuantcastScreen extends Activity {
-    
-    private static final String SAVING_THREAD_NAME = AboutQuantcastScreen.class.getName() + "#saving";
-    
-    Activity activity = this;
-    CheckBox optOutCheckbox;
-    
+
+    private static final QCLog.Tag TAG = new QCLog.Tag(AboutQuantcastScreen.class);
+
+    private static final String DIALOG_TITLE = "About Quantcast";
+    private static final String OPT_OUT_CHECKBOX_TEXT = "Allow data collection for this app";
+    private static final String CLOSE_DIALOG_BUTTON_TEXT = "Proceed";
+
+    private static final int DIALOG_VIEW_TOP_PADDING = 10;
+    private static final int DIALOG_VIEW_BOTTOM_PADDING = 10;
+    private static final int DIALOG_VIEW_LEFT_PADDING = 35;
+    private static final int DIALOG_VIEW_RIGHT_PADDING = 35;
+    private static final int DIALOG_MESSAGE_PADDING = 5;
+    private static final String FORMATTED_DIALOG_MESSAGE = "Quantcast helps us measure the usage of our app so we can better understand our audience.  Quantcast collects anonymous (non-personally identifiable) data from users across apps, such as details of app usage, the number of visits and duration, their device information, city, and settings, to provide this measurement and behavioral advertising.  A full description of Quantcast’s data collection and use practices can be found in its <a href=\"https://www.quantcast.com/privacy\">Privacy Policy</a>, and you can opt out below.  Please also review our %s privacy policy.";
+
+    private CheckBox m_optOutCheckbox;
+    private boolean m_ogAllowsCollection;
+
     protected void onCreate(android.os.Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        QuantcastClient.addActivity(this);
-        
-        optOutCheckbox = new CheckBox(activity);
-        Button proceedButton = new Button(activity);
-        View view = ResourceHelper.getDialogView(activity, proceedButton, optOutCheckbox);
 
-        proceedButton.setOnClickListener(new OnClickListener() {
+        m_ogAllowsCollection = !QCOptOutUtility.isOptedOut(getApplicationContext());
+        setTitle(DIALOG_TITLE);
 
+        String appName = QCUtility.getAppName(this);
+
+        LinearLayout dialogView = new LinearLayout(this);
+        dialogView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        dialogView.setOrientation(LinearLayout.VERTICAL);
+        dialogView.setPadding(DIALOG_VIEW_LEFT_PADDING, DIALOG_VIEW_TOP_PADDING, DIALOG_VIEW_RIGHT_PADDING, DIALOG_VIEW_BOTTOM_PADDING);
+
+        TextView dialogMessage = new TextView(this);
+        dialogMessage.setMovementMethod(LinkMovementMethod.getInstance());
+        dialogMessage.setText(Html.fromHtml(String.format(FORMATTED_DIALOG_MESSAGE, appName)));
+        dialogMessage.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        dialogMessage.setPadding(DIALOG_MESSAGE_PADDING, DIALOG_MESSAGE_PADDING, DIALOG_MESSAGE_PADDING, DIALOG_MESSAGE_PADDING);
+        dialogMessage.setLinksClickable(true);
+        dialogMessage.setTextSize(15);
+        dialogMessage.setTextColor(Color.rgb(190, 190, 190));
+        dialogView.addView(dialogMessage);
+
+        Button proceedButton = new Button(this);
+        proceedButton.setId(600);
+        final Activity activity = this;
+        proceedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final boolean blockingEventCollection = optOutCheckbox.isChecked();
-                final ProgressDialog progressDialog = ProgressDialog.show(activity, "", "Saving opt out status.");
-                new Thread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        QuantcastGlobalControlProvider.getProvider(activity).saveControl(new GlobalControl(blockingEventCollection));
-                        progressDialog.dismiss();
-                        activity.finish();
-                    }
-                    
-                }, SAVING_THREAD_NAME).start();
+                activity.finish();
             }
-
         });
-        
-        boolean canChangeIcon = requestWindowFeature(Window.FEATURE_LEFT_ICON);
-        
-        setContentView(view);
-        
-        if (canChangeIcon) {
-            getWindow().setFeatureDrawable(Window.FEATURE_LEFT_ICON, ResourceHelper.getLogo(activity));
+        LinearLayout.LayoutParams buttonLayout = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        buttonLayout.setMargins(0, 15, 0, 15);
+        proceedButton.setLayoutParams(buttonLayout);
+        proceedButton.setText(CLOSE_DIALOG_BUTTON_TEXT);
+        proceedButton.setTextSize(25);
+        // Base RGB is 57, 60, 57
+        int statePressed = android.R.attr.state_pressed;
+
+        StateListDrawable stateList = new StateListDrawable();
+        stateList.addState(new int[]{-statePressed}, new BitmapDrawable(Bitmap.createBitmap(new int[]{Color.rgb(0, 128, 52)}, 1, 1, Bitmap.Config.ARGB_8888)));
+        stateList.addState(new int[]{statePressed}, new BitmapDrawable(Bitmap.createBitmap(new int[]{Color.rgb(0, 64, 26)}, 1, 1, Bitmap.Config.ARGB_8888)));
+        proceedButton.setBackgroundDrawable(stateList);
+        proceedButton.setTextColor(Color.WHITE);
+        dialogView.addView(proceedButton);
+
+        m_optOutCheckbox = new CheckBox(this);
+        m_optOutCheckbox.setId(500);
+        m_optOutCheckbox.setChecked(m_ogAllowsCollection);
+        m_optOutCheckbox.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        m_optOutCheckbox.setText(OPT_OUT_CHECKBOX_TEXT);
+        m_optOutCheckbox.setTextSize(15);
+        m_optOutCheckbox.setTextColor(Color.rgb(190, 190, 190));
+        dialogView.addView(m_optOutCheckbox);
+
+        setContentView(dialogView);
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        QuantcastClient.activityStart(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        boolean allowsCollection = m_optOutCheckbox.isChecked();
+        if (m_ogAllowsCollection != allowsCollection) {
+            QCLog.i(TAG, "User opt out status changed to " + !allowsCollection);
+            QCOptOutUtility.saveOptOutStatus(getApplicationContext(), !allowsCollection);
         }
-        
-        setTitle(ResourceHelper.DIALOG_TITLE);
+        QuantcastClient.activityStop();
     }
-    
-    @Override
-    protected void onPause() {
-        super.onPause();
-        
-        QuantcastClient.pauseSession();
-    }
-    
-    @Override
-    protected void onResume() {
-        super.onResume();
-        
-        QuantcastClient.resumeSession();
-        
-        GlobalControlProvider globalControlProvider = QuantcastGlobalControlProvider.getProvider(activity);
-        globalControlProvider.refresh();
-        final ProgressDialog progressDialog = ProgressDialog.show(activity, "", "Retrieving current opt out status.");
-        QuantcastGlobalControlProvider.getProvider(activity).getControl(new GlobalControlListener() {
-            
-            @Override
-            public void callback(GlobalControl control) {
-                optOutCheckbox.setChecked(control.blockingEventCollection);
-                progressDialog.dismiss();
-            }
-            
-        });
-    }
-    
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        
-        QuantcastClient.endSession(activity);
-    }
-
 }
