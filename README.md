@@ -2,9 +2,9 @@
 
 Thank you for downloading the Quantcast Android SDK! This implementation guide provides steps for integrating the SDK, so you can take advantage of valuable, actionable insights:
 
-* **Traffic Stats & Return Usage** - see your audience visitation trends
-* **Combined Web / App Audiences** - understand your aggregate audience across all screens by taking a few additional steps outlined in this guide.
-* **Labels** – segment your traffic by customizing views within your app.
+* **Know Your Audience** – End the guesswork and limitations of survey-based mobile demographics. Quantcast uses direct measurement and machine learning to build accurate and detailed demographic profiles.
+* **Compare and Compete** – Gauge user loyalty by analyzing visit frequency, retention and upgrades over time
+* **Showcase and Validate** – Choose to showcase your most powerful data points to advertisers and partners via your public profile. 
 
 If you have any implementation questions, please email mobilesupport@quantcast.com. We're here to help.
 
