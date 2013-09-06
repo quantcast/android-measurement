@@ -15,11 +15,13 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.view.Display;
 import android.view.WindowManager;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
 import java.util.Date;
@@ -65,7 +67,6 @@ class QCEvent {
     static final String QC_LOCALELANG_KEY = "ll";
     static final String QC_INSTALLDATE_KEY = "inst";
     static final String QC_APPEVENT_KEY = "appevent";
-    static final String QC_LATENCY_KEY = "latency";
     static final String QC_LATENCYVALUE_KEY = "latency-value";
     static final String QC_LATENCYID_KEY = "uplid";
     static final String QC_COUNTRY_KEY = "c";
@@ -116,7 +117,6 @@ class QCEvent {
             e.addParameter(QC_APPID_KEY, appInstallId);
         }
 
-
         String appName = QCUtility.getAppName(context);
         if (appName != null) {
             e.addParameter(QC_APPNAME_KEY, appName);
@@ -139,7 +139,7 @@ class QCEvent {
         if (packageInfo != null) {
             e.addParameter(QC_VERSION_KEY, packageInfo.versionName);
             e.addParameter(QC_BUILDNUM_KEY, Integer.toString(packageInfo.versionCode));
-            if (Build.VERSION.SDK_INT >= 9) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
                 try {
                     Field field = PackageInfo.class.getField("firstInstallTime");
                     long timestamp = field.getLong(packageInfo);
@@ -162,7 +162,15 @@ class QCEvent {
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         if (windowManager != null) {
             Display d = windowManager.getDefaultDisplay();
-            String dims = String.format("%dx%dx32", d.getWidth(), d.getHeight());
+            String dims;
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
+                Point point = new Point();
+                d.getSize(point);
+                dims = String.format("%dx%dx32", point.x, point.y);
+            }else{
+                //noinspection deprecation
+                dims = String.format("%dx%dx32", d.getWidth(), d.getHeight());
+            }
             e.addParameter(QC_SCREENRES_KEY, dims);
         }
 
@@ -374,14 +382,16 @@ class QCEvent {
 
         String labelString = null;
         for(String label : labels){
-            String encodedLabel = URLEncoder.encode(label);
-            //encodes space with "+" so change it to %20
-            encodedLabel = encodedLabel.replaceAll("\\+", "%20");
-            if(labelString == null){
-                labelString = encodedLabel;
-            }else{
-                labelString += "," + encodedLabel;
-            }
+            try {
+                String encodedLabel = URLEncoder.encode(label, "UTF-8");
+                //encodes space with "+" so change it to %20
+                encodedLabel = encodedLabel.replaceAll("\\+", "%20");
+                if(labelString == null){
+                    labelString = encodedLabel;
+                }else{
+                    labelString += "," + encodedLabel;
+                }
+            } catch (UnsupportedEncodingException ignored) { }
         }
         m_parameters.put(QC_PARAMETER_LABEL, labelString);
 

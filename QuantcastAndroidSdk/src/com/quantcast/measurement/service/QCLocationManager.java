@@ -27,6 +27,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -203,10 +204,11 @@ final class QCLocationManager {
 
     private MeasurementLocation lookup(double lat, double lng) {
         String urlStr = URL + lat + "," + lng;
+        BufferedReader reader = null;
         try {
             java.net.URL url = new URL(urlStr);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder builder = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -220,6 +222,12 @@ final class QCLocationManager {
             }
         } catch (Exception mapsException) {
             QCLog.e(TAG, "Exception thrown by Google Maps", mapsException);
+        }finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException ignored) {}
+            }
         }
         return null;
     }

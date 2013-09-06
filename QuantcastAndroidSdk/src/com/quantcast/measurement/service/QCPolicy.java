@@ -318,10 +318,19 @@ class QCPolicy {
 
     private String readStreamToString(InputStream input) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(input));
-        String line;
-        while ((line = reader.readLine()) != null) {
-            stringBuilder.append(line);
+        BufferedReader reader = null;
+        try{
+            reader = new BufferedReader(new InputStreamReader(input));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stringBuilder.append(line);
+            }
+        }finally {
+            if (reader != null) {
+                try{
+                    reader.close();
+                }catch (IOException ignored){}
+            }
         }
         return stringBuilder.toString();
     }
