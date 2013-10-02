@@ -21,9 +21,7 @@ import android.telephony.TelephonyManager;
 import android.view.Display;
 import android.view.WindowManager;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -34,10 +32,12 @@ class QCEvent {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCEvent.class);
 
-    static final String QC_PARAMETER_LABEL = "labels";
+    static final String QC_PARAMETER_APP_LABEL = "labels";
+    static final String QC_PARAMETER_NETWORK_LABEL = "netlabels";
     static final String QC_EVENT_KEY = "event";
     static final String QC_REASON_KEY = "nsr";
     static final String QC_APIKEY_KEY = "apikey";
+    static final String QC_NETWORKCODE_KEY = "pcode";
     static final String QC_MEDIA_KEY = "media";
     static final String QC_MEDIA_VALUE = "app";
     static final String QC_CONNECTION_KEY = "ct";
@@ -69,9 +69,7 @@ class QCEvent {
     static final String QC_APPEVENT_KEY = "appevent";
     static final String QC_LATENCYVALUE_KEY = "latency-value";
     static final String QC_LATENCYID_KEY = "uplid";
-    static final String QC_COUNTRY_KEY = "c";
-    static final String QC_STATE_KEY = "st";
-    static final String QC_CITY_KEY = "l";
+
     static final String QC_REFERRER_KEY = "r";
     static final String QC_ERRORTYPE_KEY = "error-type";
     static final String QC_ERRORDESC_KEY = "error-desc";
@@ -84,7 +82,6 @@ class QCEvent {
     static final String QC_EVENT_RESUME = "resume";
     static final String QC_EVENT_APPEVENT = "appevent";
     static final String QC_EVENT_LATENCY = "latency";
-    static final String QC_EVENT_LOCATION = "location";
     static final String QC_EVENT_SDKERROR = "sdkerror";
 
     protected static final String QC_BEGIN_LAUNCH_REASON = "launch";
@@ -93,8 +90,8 @@ class QCEvent {
 
     static QCEvent beginSessionEvent(Context context, String userhash,
                                             String reason, String session,
-                                            String apiKey, String deviceId,
-                                            String[] labels) {
+                                            String apiKey, String networkCode,
+                                            String deviceId, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(session);
 
         e.addParameter(QC_EVENT_KEY, QC_EVENT_LOAD);
@@ -102,61 +99,39 @@ class QCEvent {
         e.addParameter(QC_APIKEY_KEY, apiKey);
         e.addParameter(QC_MEDIA_KEY, QC_MEDIA_VALUE);
         e.addParameter(QC_CONNECTION_KEY, QCReachability.networkType(context));
-
-        String referrer = QCReferrerReceiver.referrer;
-        if (referrer != null) {
-            e.addParameter(QC_REFERRER_KEY, referrer);
-        }
-
-        if (deviceId != null) {
-            e.addParameter(QC_DEVICEID_KEY, deviceId);
-        }
-
-        String appInstallId = QCUtility.getAppInstallId(context);
-        if (appInstallId != null) {
-            e.addParameter(QC_APPID_KEY, appInstallId);
-        }
-
-        String appName = QCUtility.getAppName(context);
-        if (appName != null) {
-            e.addParameter(QC_APPNAME_KEY, appName);
-        }
+        e.addParameter(QC_NETWORKCODE_KEY, networkCode);
+        e.addParameter(QC_REFERRER_KEY, QCReferrerReceiver.referrer);
+        e.addParameter(QC_DEVICEID_KEY, deviceId);
+        e.addParameter(QC_APPID_KEY, QCUtility.getAppInstallId(context));
+        e.addParameter(QC_APPNAME_KEY, QCUtility.getAppName(context));
+        e.addParameter(QC_USERHASH_KEY, userhash);
 
         String packageName = context.getPackageName();
-        if (packageName != null) {
-            e.addParameter(QC_PACKAGEID_KEY, packageName);
-        }
+        e.addParameter(QC_PACKAGEID_KEY, packageName);
 
         PackageManager packageManager = context.getPackageManager();
-        PackageInfo packageInfo = null;
-        try {
-            if (packageManager != null) {
-                packageInfo = packageManager.getPackageInfo(packageName, 0);
-            }
-        } catch (PackageManager.NameNotFoundException nnfe) {
-            QCLog.e(TAG, "Unable to get application info for this app.", nnfe);
-        }
-        if (packageInfo != null) {
-            e.addParameter(QC_VERSION_KEY, packageInfo.versionName);
-            e.addParameter(QC_BUILDNUM_KEY, Integer.toString(packageInfo.versionCode));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
-                try {
-                    Field field = PackageInfo.class.getField("firstInstallTime");
-                    long timestamp = field.getLong(packageInfo);
-                    e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(timestamp));
-                } catch (Exception e1) {
-                    //error getting install time so get next best
-                    e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+        if (packageManager != null) {
+            try {
+                PackageInfo packageInfo = packageManager.getPackageInfo(packageName, 0);
+                if (packageInfo != null) {
+                    e.addParameter(QC_VERSION_KEY, packageInfo.versionName);
+                    e.addParameter(QC_BUILDNUM_KEY, Integer.toString(packageInfo.versionCode));
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+                        try {
+                            Field field = PackageInfo.class.getField("firstInstallTime");
+                            long timestamp = field.getLong(packageInfo);
+                            e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(timestamp));
+                        } catch (Exception e1) {
+                            //error getting install time so get next best
+                            e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+                        }
+                    } else {
+                        e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+                    }
                 }
-            } else {
-                e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+            } catch (PackageManager.NameNotFoundException nnfe) {
+                QCLog.e(TAG, "Unable to get application info for this app.", nnfe);
             }
-        }
-
-        e.addLabels(labels);
-
-        if (userhash != null) {
-            e.addParameter(QC_USERHASH_KEY, userhash);
         }
 
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
@@ -177,7 +152,6 @@ class QCEvent {
 
         TimeZone tz = TimeZone.getDefault();
         Date now = new Date();
-
         e.addParameter(QC_DST_KEY, Boolean.toString(tz.inDaylightTime(now)));
 
         long tzo = tz.getOffset(now.getTime()) / 1000 / 60;
@@ -229,11 +203,13 @@ class QCEvent {
         e.addParameter(QC_LOCALECOUNTRY_KEY, locale.getISO3Country());
         e.addParameter(QC_LOCALELANG_KEY, locale.getISO3Language());
 
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
 
     }
 
-    static QCEvent closeSessionEvent(Context c, String sessionId, String[] labels) {
+    static QCEvent closeSessionEvent(Context c, String sessionId, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(sessionId);
         e.setForceUpload(true);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_FINISHED);
@@ -241,11 +217,12 @@ class QCEvent {
         if (appInstallId != null) {
             e.addParameter(QC_APPID_KEY, appInstallId);
         }
-        e.addLabels(labels);
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
     }
 
-    static QCEvent pauseSession(Context c, String sessionId, String[] labels) {
+    static QCEvent pauseSession(Context c, String sessionId, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(sessionId);
         e.setForceUpload(true);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_PAUSE);
@@ -253,22 +230,24 @@ class QCEvent {
         if (appInstallId != null) {
             e.addParameter(QC_APPID_KEY, appInstallId);
         }
-        e.addLabels(labels);
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
     }
 
-    static QCEvent resumeSession(Context c, String sessionId, String[] labels) {
+    static QCEvent resumeSession(Context c, String sessionId, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(sessionId);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_RESUME);
         String appInstallId = QCUtility.getAppInstallId(c);
         if (appInstallId != null) {
             e.addParameter(QC_APPID_KEY, appInstallId);
         }
-        e.addLabels(labels);
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
     }
 
-    static QCEvent logEvent(Context c, String sessionId, String eventName, String[] labels) {
+    static QCEvent logEvent(Context c, String sessionId, String eventName, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(sessionId);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_APPEVENT);
         e.addParameter(QC_APPEVENT_KEY, eventName);
@@ -276,7 +255,8 @@ class QCEvent {
         if (appInstallId != null) {
             e.addParameter(QC_APPID_KEY, appInstallId);
         }
-        e.addLabels(labels);
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
     }
 
@@ -294,19 +274,6 @@ class QCEvent {
         return e;
     }
 
-    static QCEvent logLocation(Context c, String sessionId, String country, String state, String city) {
-        QCEvent e = new QCEvent(sessionId);
-        e.addParameter(QC_EVENT_KEY, QC_EVENT_LOCATION);
-        e.addParameter(QC_COUNTRY_KEY, country);
-        e.addParameter(QC_STATE_KEY, state);
-        e.addParameter(QC_CITY_KEY, city);
-        String appInstallId = QCUtility.getAppInstallId(c);
-        if (appInstallId != null) {
-            e.addParameter(QC_APPID_KEY, appInstallId);
-        }
-        return e;
-    }
-
     static QCEvent logSDKError(String sessionId, String errorType, String errorDesc, String errorParam) {
         QCEvent e = new QCEvent(sessionId);
         e.setForceUpload(true);
@@ -319,6 +286,18 @@ class QCEvent {
         if (errorParam != null) {
             e.addParameter(QC_ERRORPARAM_KEY, errorParam);
         }
+        return e;
+    }
+
+    static QCEvent logOptionalEvent(Context c, String sessionId, Map<String, String> params, String[] appLabels, String[] networkLabel){
+        QCEvent e = new QCEvent(sessionId);
+        e.addParameters(params);
+        String appInstallId = QCUtility.getAppInstallId(c);
+        if (appInstallId != null) {
+            e.addParameter(QC_APPID_KEY, appInstallId);
+        }
+        e.addLabels(appLabels);
+        e.addNetworkLabels(networkLabel);
         return e;
     }
 
@@ -354,47 +333,43 @@ class QCEvent {
         return e;
     }
 
-    private final Map<String, Object> m_parameters;
+    private final Map<String, String> m_parameters;
     private final String m_eventId;
     private boolean m_forceUpload;
 
     QCEvent(Long eventId) {
-        m_parameters = new HashMap<String, Object>();
+        m_parameters = new HashMap<String, String>();
         m_eventId = Long.toString(eventId);
         m_forceUpload = false;
     }
 
     QCEvent(String sessionId) {
-        m_parameters = new HashMap<String, Object>();
+        m_parameters = new HashMap<String, String>();
         addParameter(QC_TIMESTAMP_KEY, Long.toString(System.currentTimeMillis() / 1000));
         addParameter(QC_SESSIONID_KEY, sessionId);
         m_eventId = null;
     }
 
-    void addParameter(String key, Object value) {
+    void addParameter(String key, String value) {
         if (value != null) {
             m_parameters.put(key, value);
         }
     }
 
-    void addLabels(String[] labels) {
-        if (labels == null || labels.length == 0) return;
-
-        String labelString = null;
-        for(String label : labels){
-            try {
-                String encodedLabel = URLEncoder.encode(label, "UTF-8");
-                //encodes space with "+" so change it to %20
-                encodedLabel = encodedLabel.replaceAll("\\+", "%20");
-                if(labelString == null){
-                    labelString = encodedLabel;
-                }else{
-                    labelString += "," + encodedLabel;
-                }
-            } catch (UnsupportedEncodingException ignored) { }
+    void addParameters(Map<String, String> params){
+        if(params != null && params.size() > 0){
+            m_parameters.putAll(params);
         }
-        m_parameters.put(QC_PARAMETER_LABEL, labelString);
+    }
 
+    void addLabels(String[] labels) {
+        String encoded = QCUtility.encodeStringArray(labels);
+        addParameter(QC_PARAMETER_APP_LABEL, encoded);
+    }
+
+    void addNetworkLabels(String[] networkLabels) {
+        String encoded = QCUtility.encodeStringArray(networkLabels);
+        addParameter(QC_PARAMETER_NETWORK_LABEL, encoded);
     }
 
     boolean shouldForceUpload() {
@@ -409,7 +384,7 @@ class QCEvent {
         return m_eventId;
     }
 
-    Map<String, Object> getParameters() {
+    Map<String, String> getParameters() {
         return m_parameters;
     }
 

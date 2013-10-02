@@ -31,24 +31,71 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
 
 
-final class QCLocationManager {
+public enum QCLocation implements QCNotificationListener{
+    INSTANCE;
 
-    private static final QCLog.Tag TAG = new QCLog.Tag(QCLocationManager.class);
-
+    private static final QCLog.Tag TAG = new QCLog.Tag(QCLocation.class);
     private static final int STALE_LIMIT = 1000 * 60 * 10;  //10 minutes
-    private final LocationManager _locManager;
+    public static final String QC_NOTIF_LOCATION_START = "QC_LOC_START";
 
+    static final String QC_EVENT_LOCATION = "location";
+    static final String QC_COUNTRY_KEY = "c";
+    static final String QC_STATE_KEY = "st";
+    static final String QC_CITY_KEY = "l";
+
+    private LocationManager _locManager;
+
+    private boolean _locationEnabled;
     private String _myProvider;
     private AsyncTask _geoTask;
     private Geocoder _geocoder;
 
-    QCLocationManager(Context appContext) {
-        //loop through every provider and try to find a location
-        _locManager = (LocationManager) appContext.getSystemService(Context.LOCATION_SERVICE);
+    public static void setEnableLocationGathering(boolean enableLocationGathering) {
+        QCLocation.INSTANCE.setLocationEnabled(enableLocationGathering);
+        if(QCMeasurement.INSTANCE.isMeasurementActive()){
+            QCLocation.INSTANCE.startStopLocation(QCMeasurement.INSTANCE.getAppContext());
+        }
+    }
 
+    private QCLocation(){
+        _locationEnabled = false;
+        QCNotificationCenter.INSTANCE.addListener(QCMeasurement.QC_NOTIF_APP_START, this);
+        QCNotificationCenter.INSTANCE.addListener(QCMeasurement.QC_NOTIF_APP_STOP, this);
+        QCNotificationCenter.INSTANCE.addListener(QCOptOutUtility.QC_NOTIF_OPT_OUT_CHANGED, this);
+        QCNotificationCenter.INSTANCE.addListener(QCPolicy.QC_NOTIF_POLICY_UPDATE, this);
+    }
+
+
+    @Override
+    public void notificationCallback(String notificationName, Object o) {
+        if (notificationName.equals(QCMeasurement.QC_NOTIF_APP_START) || notificationName.equals(QC_NOTIF_LOCATION_START)) {
+
+            Context appContext = (Context)o;
+            startStopLocation(appContext);
+        } else if (notificationName.equals(QCMeasurement.QC_NOTIF_APP_STOP)) {
+            stop();
+        } else if (notificationName.equals(QCOptOutUtility.QC_NOTIF_OPT_OUT_CHANGED)) {
+            boolean optOut = (Boolean) o;
+            if(optOut){
+                stop();
+                _locManager = null;
+                _myProvider = null;
+                _geocoder = null;
+            }else{
+                startStopLocation(QCMeasurement.INSTANCE.getAppContext());
+            }
+
+        }
+    }
+
+    void setupLocManager(Context appContext){
+        if(appContext == null)  return;
+
+        _locManager = (LocationManager) appContext.getSystemService(Context.LOCATION_SERVICE);
         if (_locManager != null) {
             //specifically set our Criteria. All we need is a general location
             Criteria criteria = new Criteria();
@@ -63,7 +110,23 @@ final class QCLocationManager {
 
             _geocoder = new Geocoder(appContext);
         }
+        QCLog.i(TAG, "Setting location provider " + _myProvider);
+    }
 
+    void startStopLocation(Context appContext){
+        if(_locationEnabled){
+            setupLocManager(appContext);
+            start();
+        }else{
+            stop();
+            _locManager = null;
+            _myProvider = null;
+            _geocoder = null;
+        }
+    }
+
+    public void setLocationEnabled(boolean locationEnabled) {
+        _locationEnabled = locationEnabled;
     }
 
     //check all providers for any recently cached data see if we can save a call
@@ -90,7 +153,7 @@ final class QCLocationManager {
     }
 
     void start() {
-
+        QCLog.i(TAG, "Start retrieving location ");
         Location bestLocation = findBestLocation();
         if (bestLocation != null) {
             sendLocation(bestLocation);
@@ -109,11 +172,13 @@ final class QCLocationManager {
     }
 
     void stop() {
-        _locManager.removeUpdates(singleUpdateListener);
-        if (null != _geoTask && _geoTask.getStatus() != AsyncTask.Status.FINISHED) {
-            _geoTask.cancel(true);
+        if(_locManager != null){
+            _locManager.removeUpdates(singleUpdateListener);
+            if (null != _geoTask && _geoTask.getStatus() != AsyncTask.Status.FINISHED) {
+                _geoTask.cancel(true);
+            }
+            _geoTask = null;
         }
-        _geoTask = null;
     }
 
     Geocoder getGeocoder() {
@@ -165,11 +230,24 @@ final class QCLocationManager {
             protected void onPostExecute(MeasurementLocation address) {
                 if (null != address && address.getCountry() != null) {
                     QCLog.i(TAG, "Got address and sending..." + address.getCountry() + " " + address.getState() + " " + address.getLocality());
-                    QCMeasurement.INSTANCE.logLocation(address.getCountry(), address.getState(), address.getLocality());
+                    HashMap<String, String > params = new HashMap<String, String>();
+                    params.put(QCEvent.QC_EVENT_KEY, QC_EVENT_LOCATION);
+                    if(address.getCountry() != null){
+                        params.put(QC_COUNTRY_KEY, address.getCountry());
+                    }
+                    if(address.getState() != null){
+                        params.put(QC_STATE_KEY, address.getState());
+                    }
+                    if(address.getLocality() != null){
+                        params.put(QC_CITY_KEY, address.getLocality());
+                    }
+                    QCMeasurement.INSTANCE.logOptionalEvent(params, null, null);
                 }
             }
         }.execute(lat, longTemp);
     }
+
+
 
     protected final LocationListener singleUpdateListener = new LocationListener() {
         public void onLocationChanged(Location location) {

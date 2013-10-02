@@ -17,6 +17,8 @@ import android.content.Intent;
 import android.util.Log;
 import android.webkit.WebView;
 
+import java.lang.reflect.Method;
+
 /**
  * Client API for Quantcast Measurement service.
  * <p/>
@@ -161,7 +163,15 @@ public class QuantcastClient {
      * @param enableLocationGathering Set to true to enable location, false to disable
      */
     public static void setEnableLocationGathering(boolean enableLocationGathering) {
-        QCMeasurement.INSTANCE.setLocationEnabled(enableLocationGathering);
+        QCLog.Tag t = new QCLog.Tag(QCMeasurement.class);
+        QCLog.w(t, "Location is now an optional class.  To enable use QCLocation.setEnableLocationGathering(true) instead of this method.");
+        try {
+            Class c = Class.forName("com.quantcast.measurement.service.QCLocation");
+            Method method = c.getMethod("setEnableLocationGathering", new Class[]{boolean.class});
+            method.invoke(null, enableLocationGathering);
+        } catch (Exception e) {
+            QCLog.e(t, "QCLocation class not found.  It can be found in the optional-src directory.  Please add it to the package.");
+        }
     }
 
     /**

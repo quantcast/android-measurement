@@ -15,8 +15,11 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.UUID;
 
 class QCUtility {
@@ -24,7 +27,7 @@ class QCUtility {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCUtility.class);
 
-    public static final String API_VERSION = "1_0_1";
+    public static final String API_VERSION = "1_1_0";
 
     private static final long[] HASH_CONSTANTS = {0x811c9dc5, 0xc9dc5118};
 
@@ -79,6 +82,21 @@ class QCUtility {
         return appName;
     }
 
+    protected static String getAPIKey(Context context){
+        String apiKey = null;
+        PackageManager pm = context.getPackageManager();
+        if(pm != null){
+            try {
+                ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+                if(ai != null && ai.metaData != null){
+                    apiKey = ai.metaData.getString("com.quantcast.apiKey");
+                }
+            } catch (PackageManager.NameNotFoundException ignored) {
+            }
+        }
+        return apiKey;
+    }
+
     protected static String getAppInstallId(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
         String installId = sharedPreferences.getString(INSTALL_ID_PREF_NAME, null);
@@ -115,6 +133,27 @@ class QCUtility {
 
     protected static String addScheme(String schemelessUrl) {
         return (QuantcastClient.isUsingSecureConnections() ? HTTPS_SCHEME : HTTP_SCHEME) + schemelessUrl;
+    }
+
+    protected static String encodeStringArray(String[] values){
+        if (values == null || values.length == 0) return null;
+
+        String valueString = null;
+        for(String value : values){
+            if(value != null){
+                try {
+                    String encodedValue = URLEncoder.encode(value, "UTF-8");
+                    //encodes space with "+" so change it to %20
+                    encodedValue = encodedValue.replaceAll("\\+", "%20");
+                    if(valueString == null){
+                        valueString = encodedValue;
+                    }else{
+                        valueString += "," + encodedValue;
+                    }
+                } catch (UnsupportedEncodingException ignored) { }
+            }
+        }
+        return  valueString;
     }
 
 }

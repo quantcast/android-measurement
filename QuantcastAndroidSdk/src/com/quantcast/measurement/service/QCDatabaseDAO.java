@@ -269,14 +269,9 @@ class QCDatabaseDAO extends SQLiteOpenHelper {
                             if (eventId < 0) {
                                 QCLog.e(TAG, "Unable to save " + event + ". See DatabaseUtils logs for a detailed stack trace.");
                             } else {
-                                for (Entry<String, Object> entry : event.getParameters().entrySet()) {
+                                for (Entry<String, String> entry : event.getParameters().entrySet()) {
                                     String name = entry.getKey();
-                                    String value;
-                                    if (entry.getValue() instanceof String) {
-                                        value = (String) entry.getValue();
-                                    } else {
-                                        continue;
-                                    }
+                                    String value = entry.getValue();
                                     paramsStatement.clearBindings();
                                     paramsStatement.bindLong(1, eventId);
                                     paramsStatement.bindString(2, name);

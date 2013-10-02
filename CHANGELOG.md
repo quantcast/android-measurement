@@ -1,4 +1,13 @@
 # Quantcast Android SDK Changelog #
+
+## Version 1.1.0 ##
+-  Refactored location to be completely optional in src-optional directory
+-  Added optional calls specifically for periodicals and magazine measurement
+-  Added optional calls for Quantcast integration into 3rd party platforms.
+
+## Version 1.0.1 ##
+-  Fixed buffered reader calls.  Github issue #3
+
 ## Version 1.0.0 ##
 
 - 	Simplified integration by adding `activityStart` and `activityStop`
@@ -142,11 +151,5 @@
 	QuantcastClient.setEnableLocationGathering(true);
 	```
 	
-
-
-
-
-
-
 
 

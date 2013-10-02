@@ -59,12 +59,6 @@ Note: for the `android update project` command described in the guide be sure to
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 	```
-	
-	You can optionally add the following permission to gather more information about your user base:
-	
-	``` xml
-	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-	```
 
 	Also add the following lines within the `<application>` tag to allow the `AboutQuantcastScreen` to show:
 
@@ -141,16 +135,25 @@ While there is no constraint on the intended use of the label dimension, it is n
 
 #### Geo-Location Measurement ####
 
-To get geo-location aware reporting, turn on geo-tracking in the `onCreate()` method of every `Activity` in your project before you call `beginSessionWithApiKey()` with the following:
+Change: The geolocation libray has be moved starting in version 1.1.0 to the optional-src directioy in order to remove any LocationManager code from applications that do not use it.  In order to add geolocation either add the QCLocation class into the src folder or add optional-src as another source location in your project.
+
+To get geo-location aware reporting, turn on geo-tracking in the `onStart()` method of every `Activity` in your project before you call `activityStart()` with the following:
 
 ``` java
-QuantcastClient.setEnableLocationGathering(true);
+QCLocation.setEnableLocationGathering(true);
 ```
 
+	
+You also must add the following permission to gather more information about your user base:
+	
+``` xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+```
+    
 Note: only enable geo-tracking if your app has some location-aware purpose.
 
 The Quantcast Android SDK will automatically pause geo-tracking while your app is in the background. This is done for both battery-life and privacy considerations.
-
+ 
 #### Combined Web/App Audiences ####
 
 Quantcast Measure enables you to measure your combined web and mobile app audiences, allowing you to understand the differences and similarities of your online and mobile app audiences, or even the combined audiences of your different apps. To enable this feature, you will need to provide a user identifier, which Quantcast will always anonymize with a 1-way hash before it is transmitted from the user's device. This user identifier should also be provided for your website(s); please see Quantcast's web measurement documentation for instructions.
@@ -172,6 +175,15 @@ QuantcastClient.newDeduplicatedWebView(this);
 ```
 
 This will return a Webview specially tagged to stop duplications.   If you need to extend a webview you can also extend `QCDeduplicatedWebView` instead of a normal WebView.
+
+#### Digital Magazine and Periodical Measurement ####
+
+Quantcast Measure provides measurement features specific to digital magazines and periodicals. These options allow the measurement of specific issues, articles and pages in addition to the general measurement of the app hosting the magazine. In order to take advantage of this measurement, you must at a minimum tag when a particular issue has been opened and closed and when each page in that issue has been viewed (in addition to the basic SDK integration). You may also optionally tag when a particular article has been viewed. For more information, please refer to the documentation in the source file which can be found in the SDK source folder at optional-src/QCPeriodical.java.
+
+#### Network/Platform Measurement ####
+
+This feature should only be used by app networks, most notably app platforms, app development shops, and companies with a large number of branded apps where they want to maintain the app's brand when quantifying but still have the app traffic attributed to a parent network. Entities quantifying a single app or a number of apps under the same network should not use this feature.  The Networks extension adds the ability to identify a parent network, referred to as an "attributed network", for each app in addition to or instead of the app's API Key. For more information, please refer to the documentation in the source file which can be found in the SDK source folder at optional-src/QCNetworkMeasurement.java.
+
 
 ### SDK Customization ###
 
@@ -208,4 +220,5 @@ Note that using secure data uploads causes your app to use encryption technology
 ### License ###
 
 This Quantcast Measurement SDK is Copyright 2012 Quantcast Corp. This SDK is licensed under the Quantcast Mobile App Measurement Terms of Service, found at [the Quantcast website here](https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos "Quantcast's Measurement SDK Terms of Service") (the "License"). You may not use this SDK unless (1) you sign up for an account at [Quantcast.com](https://www.quantcast.com "Quantcast.com") and click your agreement to the License and (2) are in compliance with the License. See the License for the specific language governing permissions and limitations under the License.
+
 

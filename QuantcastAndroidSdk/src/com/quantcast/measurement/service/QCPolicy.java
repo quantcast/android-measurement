@@ -60,14 +60,17 @@ class QCPolicy {
     private static final String POLICY_REQUEST_API_KEY_PARAMETER = "a";
     private static final String POLICY_REQUEST_API_VERSION_PARAMETER = "v";
     private static final String POLICY_REQUEST_DEVICE_TYPE_PARAMETER = "t";
+    private static final String POLICY_REQUEST_PACKAGE_PARAMETER = "p";
+    private static final String POLICY_REQUEST_NETWORK_CODE_PARAMETER = "n";
+    private static final String POLICY_REQUEST_KID_DIRECTED_PARAMETER = "k";
     private static final String POLICY_REQUEST_DEVICE_COUNTRY = "c";
     private static final String POLICY_REQUEST_DEVICE_TYPE = "ANDROID";
 
-    public static QCPolicy getQuantcastPolicy(Context context, String apiKey) {
+    public static QCPolicy getQuantcastPolicy(Context context, String apiKey, String networkCode, String packageName, boolean kidDirected) {
         Uri.Builder builder = Uri.parse(QCUtility.addScheme(POLICY_REQUEST_BASE_WITHOUT_SCHEME)).buildUpon();
-        builder.appendQueryParameter(POLICY_REQUEST_API_KEY_PARAMETER, apiKey);
         builder.appendQueryParameter(POLICY_REQUEST_API_VERSION_PARAMETER, QCUtility.API_VERSION);
         builder.appendQueryParameter(POLICY_REQUEST_DEVICE_TYPE_PARAMETER, POLICY_REQUEST_DEVICE_TYPE);
+
         String mcc = null;
         TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         if (tel != null) {
@@ -81,6 +84,17 @@ class QCPolicy {
         }
         if (mcc != null) {
             builder.appendQueryParameter(POLICY_REQUEST_DEVICE_COUNTRY, mcc);
+        }
+
+        if(apiKey != null){
+            builder.appendQueryParameter(POLICY_REQUEST_API_KEY_PARAMETER, apiKey);
+        }else{
+            builder.appendQueryParameter(POLICY_REQUEST_NETWORK_CODE_PARAMETER, networkCode);
+            builder.appendQueryParameter(POLICY_REQUEST_PACKAGE_PARAMETER, packageName);
+        }
+
+        if(kidDirected){
+            builder.appendQueryParameter(POLICY_REQUEST_KID_DIRECTED_PARAMETER, "YES");
         }
 
         Uri builtURL = builder.build();
@@ -144,6 +158,7 @@ class QCPolicy {
                         jsonString = readStreamToString(inputStream);
                     } catch (Exception e) {
                         QCLog.e(TAG, "Could not download policy", e);
+                        QCMeasurement.INSTANCE.logSDKError("policy-download-failure", e.getMessage(), null);
                     } finally {
                         if (inputStream != null) {
                             try {

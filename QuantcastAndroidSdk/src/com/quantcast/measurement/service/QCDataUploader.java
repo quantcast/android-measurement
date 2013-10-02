@@ -75,11 +75,13 @@ class QCDataUploader {
             code = response.getStatusLine().getStatusCode();
         } catch (Exception e) {
             QCLog.e(TAG, "Could not upload events", e);
+            QCMeasurement.INSTANCE.logSDKError("json-upload-failure", e.getMessage(), null);
         }
 
         if (!isSuccessful(code)) {
             uploadId = null;
             QCLog.e(TAG, "Events not sent to server. Response code: " + code);
+            QCMeasurement.INSTANCE.logSDKError("json-upload-failure", "Bad response from server. Response code: " + code, null);
         }
         return uploadId;
     }

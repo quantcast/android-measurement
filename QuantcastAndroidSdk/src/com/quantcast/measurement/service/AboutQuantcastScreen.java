@@ -52,7 +52,7 @@ public class AboutQuantcastScreen extends Activity {
         String appName = QCUtility.getAppName(this);
 
         LinearLayout dialogView = new LinearLayout(this);
-        dialogView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        dialogView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         dialogView.setOrientation(LinearLayout.VERTICAL);
         dialogView.setPadding(DIALOG_VIEW_LEFT_PADDING, DIALOG_VIEW_TOP_PADDING, DIALOG_VIEW_RIGHT_PADDING, DIALOG_VIEW_BOTTOM_PADDING);
 
@@ -75,7 +75,7 @@ public class AboutQuantcastScreen extends Activity {
                 activity.finish();
             }
         });
-        LinearLayout.LayoutParams buttonLayout = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        LinearLayout.LayoutParams buttonLayout = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         buttonLayout.setMargins(0, 15, 0, 15);
         proceedButton.setLayoutParams(buttonLayout);
         proceedButton.setText(CLOSE_DIALOG_BUTTON_TEXT);
@@ -84,8 +84,8 @@ public class AboutQuantcastScreen extends Activity {
         int statePressed = android.R.attr.state_pressed;
 
         StateListDrawable stateList = new StateListDrawable();
-        stateList.addState(new int[]{-statePressed}, new BitmapDrawable(Bitmap.createBitmap(new int[]{Color.rgb(0, 128, 52)}, 1, 1, Bitmap.Config.ARGB_8888)));
-        stateList.addState(new int[]{statePressed}, new BitmapDrawable(Bitmap.createBitmap(new int[]{Color.rgb(0, 64, 26)}, 1, 1, Bitmap.Config.ARGB_8888)));
+        stateList.addState(new int[]{-statePressed}, new BitmapDrawable(this.getResources(), Bitmap.createBitmap(new int[]{Color.rgb(0, 128, 52)}, 1, 1, Bitmap.Config.ARGB_8888)));
+        stateList.addState(new int[]{statePressed}, new BitmapDrawable(this.getResources(), Bitmap.createBitmap(new int[]{Color.rgb(0, 64, 26)}, 1, 1, Bitmap.Config.ARGB_8888)));
         proceedButton.setBackgroundDrawable(stateList);
         proceedButton.setTextColor(Color.WHITE);
         dialogView.addView(proceedButton);
