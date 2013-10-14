@@ -13,6 +13,9 @@ package com.quantcast.measurement.service;
 
 import android.content.Context;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *  @class QuantcastMeasurement+Networks
  *  @abstract   This optional addition to QuantcastClient allows app networks and platforms to quantify all of their network app traffic while still
@@ -53,6 +56,9 @@ import android.content.Context;
  */
 public class QCNetworkMeasurement {
     private static final QCLog.Tag TAG = new QCLog.Tag(QCNetworkMeasurement.class);
+    static final String QC_NETEVENT_KEY = "netevent";
+    static final String QC_EVENT_NETEVENT = "netevent";
+
     /**
      * Used when initially starting the SDK in the main activity.  This should be called in EVERY Activity's onStart() method.  The context and api key are required.
      *
@@ -134,11 +140,38 @@ public class QCNetworkMeasurement {
      *               second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
      *               For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
      *               and one for users who have purchased an upgrade.
+     * @param networkLabels (Optional) networkLabels are the same as labels but will be only seen by the network instead of the apiKey.
      */
     public static void logEvent(String name, String[] appLabels, String[] networkLabels) {
         if(!QCMeasurement.INSTANCE.hasNetworkCode()){
             QCLog.e(TAG, "Network labels will be ignored without starting with a network code.  Call QCNetworkMeasurement.activityStart on Activity onStart to set a network code");
         }
         QCMeasurement.INSTANCE.logEvent(name, appLabels, networkLabels);
+    }
+
+    /**
+     * Logs an network-defined event can be arbitrarily defined.
+     *
+     * @param name   A string that identifies the event being logged. Hierarchical information can be indicated by using a left-to-right notation with a period as a separator.
+     *               For example, logging one event named "button.left" and another named "button.right" will create three reportable items in Quantcast App Measurement:
+     *               "button.left", "button.right", and "button".
+     *               There is no limit on the cardinality that this hierarchical scheme can create,
+     *               though low-frequency events may not have an audience report on due to the lack of a statistically significant population.
+     * @param networkLabels (Optional) An application label is any arbitrary string that you want to be associated with this event, and will create a
+     *               second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
+     *               For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
+     *               and one for users who have purchased an upgrade.
+     */
+
+    public static void logNetworkEvent(String name, String[] networkLabels){
+        if(!QCMeasurement.INSTANCE.hasNetworkCode()){
+            QCLog.e(TAG, "Network labels will be ignored without starting with a network code.  Call QCNetworkMeasurement.activityStart on Activity onStart to set a network code");
+        }
+
+        Map<String, String> params = new HashMap<String, String>();
+        params.put(QCEvent.QC_EVENT_KEY, QC_EVENT_NETEVENT);
+        params.put(QC_NETEVENT_KEY, name);
+        QCMeasurement.INSTANCE.logOptionalEvent(params, null, networkLabels);
+
     }
 }

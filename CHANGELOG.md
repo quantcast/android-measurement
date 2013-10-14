@@ -1,5 +1,8 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.1.1 ##
+-  Added "network events" for the Network extension.
+
 ## Version 1.1.0 ##
 -  Refactored location to be completely optional in src-optional directory
 -  Added optional calls specifically for periodicals and magazine measurement
