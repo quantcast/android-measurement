@@ -57,15 +57,12 @@ Note: for the `android update project` command described in the guide be sure to
 	``` xml
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+	```
+
+    You can optionally add the following permissions to gather more information about your user base:
+    ``` xml
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-	```
-
-	Also add the following lines within the `<application>` tag to allow the `AboutQuantcastScreen` to show:
-
-	``` xml
-	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
-	</activity>
-	```
+    ```
     
     Finally to collect referrer data from the Google Play Store add the following lines within the `<application>` tag:
     ```xml
@@ -113,6 +110,12 @@ QuantcastClient.showAboutQuantcastScreen(activity);
 	
 `activity` is your project's preference `Activity`.
 	
+Also add the following lines within the `<application>` tag to allow the `AboutQuantcastScreen` to show:
+
+``` xml
+	<activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen" >
+	</activity>
+```
 Note: when a user opts out of Quantcast Measure, the Quantcast Android SDK immediately stops transmitting information to or from the user's device and deletes any cached information that may have retained. Furthermore, when a user opts out of a single app on a device, the action affects all other apps on the device that are integrated with Quantcast Measure the next time they are launched.
 
 ### Optional Code Integrations ###
@@ -219,6 +222,5 @@ Note that using secure data uploads causes your app to use encryption technology
 
 ### License ###
 
-This Quantcast Measurement SDK is Copyright 2012 Quantcast Corp. This SDK is licensed under the Quantcast Mobile App Measurement Terms of Service, found at [the Quantcast website here](https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos "Quantcast's Measurement SDK Terms of Service") (the "License"). You may not use this SDK unless (1) you sign up for an account at [Quantcast.com](https://www.quantcast.com "Quantcast.com") and click your agreement to the License and (2) are in compliance with the License. See the License for the specific language governing permissions and limitations under the License.
-
+This Quantcast Measurement SDK is Copyright 2013 Quantcast Corp. This SDK is licensed under the Quantcast Mobile App Measurement Terms of Service, found at [the Quantcast website here](https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos "Quantcast's Measurement SDK Terms of Service") (the "License"). You may not use this SDK unless (1) you sign up for an account at [Quantcast.com](https://www.quantcast.com "Quantcast.com") and click your agreement to the License and (2) are in compliance with the License. See the License for the specific language governing permissions and limitations under the License.
 
