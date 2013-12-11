@@ -56,7 +56,7 @@ class QCDataUploader {
             return null;
         }
 
-        int code = HttpStatus.SC_BAD_REQUEST;
+        int code;
         String url = QCUtility.addScheme(UPLOAD_URL_WITHOUT_SCHEME);
         final DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
         final BasicHttpContext localContext = new BasicHttpContext();
@@ -75,7 +75,8 @@ class QCDataUploader {
             code = response.getStatusLine().getStatusCode();
         } catch (Exception e) {
             QCLog.e(TAG, "Could not upload events", e);
-            QCMeasurement.INSTANCE.logSDKError("json-upload-failure", e.getMessage(), null);
+            QCMeasurement.INSTANCE.logSDKError("json-upload-failure", e.toString(), null);
+            code = HttpStatus.SC_REQUEST_TIMEOUT;
         }
 
         if (!isSuccessful(code)) {

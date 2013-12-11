@@ -21,11 +21,13 @@ import android.telephony.TelephonyManager;
 import android.view.Display;
 import android.view.WindowManager;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.MissingResourceException;
 import java.util.TimeZone;
 
 class QCEvent {
@@ -122,11 +124,17 @@ class QCEvent {
                             long timestamp = field.getLong(packageInfo);
                             e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(timestamp));
                         } catch (Exception e1) {
+                            File filesDir = context.getFilesDir();
                             //error getting install time so get next best
-                            e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+                            if(filesDir != null){
+                                e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(filesDir.lastModified()));
+                            }
                         }
                     } else {
-                        e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(context.getFilesDir().lastModified()));
+                        File filesDir = context.getFilesDir();
+                        if(filesDir != null){
+                            e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(filesDir.lastModified()));
+                        }
                     }
                 }
             } catch (PackageManager.NameNotFoundException nnfe) {
@@ -160,36 +168,43 @@ class QCEvent {
 
         TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         if (tel != null) {
-            String carrierInfo = tel.getNetworkOperator();
-            //no network?  then try the sim
-            if (carrierInfo == null || carrierInfo.length() <= 0) {
-                carrierInfo = tel.getSimOperator();
-            }
-            if (carrierInfo != null && carrierInfo.length() > 0) {
-                if (carrierInfo.length() <= 3) {
-                    e.addParameter(QC_MCC_KEY, carrierInfo);
-                } else {
-                    e.addParameter(QC_MCC_KEY, carrierInfo.substring(0, 3));
-                    e.addParameter(QC_MNC_KEY, carrierInfo.substring(3));
+            try{
+                String carrierInfo = tel.getNetworkOperator();
+                //no network?  then try the sim
+                if (carrierInfo == null || carrierInfo.length() <= 0) {
+                    carrierInfo = tel.getSimOperator();
                 }
-            }
+                if (carrierInfo != null && carrierInfo.length() > 0) {
+                    if (carrierInfo.length() <= 3) {
+                        e.addParameter(QC_MCC_KEY, carrierInfo);
+                    } else {
+                        e.addParameter(QC_MCC_KEY, carrierInfo.substring(0, 3));
+                        e.addParameter(QC_MNC_KEY, carrierInfo.substring(3));
+                    }
+                }
+            }catch(SecurityException ignored){   }
 
-            String countryCode = tel.getNetworkCountryIso();
-            if (countryCode == null || countryCode.length() == 0) {
-                countryCode = tel.getSimCountryIso();
-            }
-            if (countryCode != null && countryCode.length() > 0) {
-                e.addParameter(QC_COUNTRYCODE_KEY, countryCode);
-            }
+            try{
+                String countryCode = tel.getNetworkCountryIso();
+                if (countryCode == null || countryCode.length() == 0) {
+                    countryCode = tel.getSimCountryIso();
+                }
+                if (countryCode != null && countryCode.length() > 0) {
+                    e.addParameter(QC_COUNTRYCODE_KEY, countryCode);
+                }
+            }catch(SecurityException ignored){   }
 
-            String carrierName = tel.getNetworkOperatorName();
-            if (carrierName == null || carrierName.length() == 0) {
-                carrierName = tel.getSimOperatorName();
-            }
-            if (carrierName != null && carrierName.length() > 0) {
-                e.addParameter(QC_CARRIERNAME_KEY, carrierName);
-            }
+            try{
+                String carrierName = tel.getNetworkOperatorName();
+                if (carrierName == null || carrierName.length() == 0) {
+                    carrierName = tel.getSimOperatorName();
+                }
+                if (carrierName != null && carrierName.length() > 0) {
+                    e.addParameter(QC_CARRIERNAME_KEY, carrierName);
+                }
+            }catch(SecurityException ignored){   }
         }
+
         int screenLayout = context.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
         boolean isTablet = screenLayout == 4 || screenLayout == Configuration.SCREENLAYOUT_SIZE_LARGE;
         e.addParameter(QC_DEVICETYPE_KEY, isTablet ? "Tablet" : "Handset");
@@ -200,8 +215,13 @@ class QCEvent {
         e.addParameter(QC_MANUFACTURER_KEY, Build.MANUFACTURER);
 
         Locale locale = Locale.getDefault();
-        e.addParameter(QC_LOCALECOUNTRY_KEY, locale.getISO3Country());
-        e.addParameter(QC_LOCALELANG_KEY, locale.getISO3Language());
+        try{
+            e.addParameter(QC_LOCALECOUNTRY_KEY, locale.getISO3Country());
+            e.addParameter(QC_LOCALELANG_KEY, locale.getISO3Language());
+        }catch(MissingResourceException mre){
+            e.addParameter(QC_LOCALECOUNTRY_KEY, "XX");
+            e.addParameter(QC_LOCALELANG_KEY, "xx");
+        }
 
         e.addLabels(appLabels);
         e.addNetworkLabels(networkLabel);

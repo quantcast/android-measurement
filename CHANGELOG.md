@@ -1,5 +1,11 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.1.2 ##
+-  fixed event enqueuing for older android devices.
+-  bug fix for missing permissions on specific devices
+-  updated sessioning
+-  fixed opt out
+
 ## Version 1.1.1 ##
 -  Added "network events" for the Network extension.
 

@@ -72,13 +72,16 @@ class QCPolicy {
         builder.appendQueryParameter(POLICY_REQUEST_DEVICE_TYPE_PARAMETER, POLICY_REQUEST_DEVICE_TYPE);
 
         String mcc = null;
-        TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        if (tel != null) {
-            mcc = tel.getNetworkCountryIso();
-            if (mcc == null) {
-                mcc = tel.getSimCountryIso();
+        try{
+            TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            if (tel != null) {
+                mcc = tel.getNetworkCountryIso();
+                if (mcc == null) {
+                    mcc = tel.getSimCountryIso();
+                }
             }
-        }
+        }catch (SecurityException ignored){}
+
         if (mcc == null) {
             mcc = Locale.getDefault().getCountry();
         }

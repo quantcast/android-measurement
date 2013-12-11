@@ -16,6 +16,10 @@ import android.provider.Settings;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -44,7 +48,6 @@ enum QCMeasurement implements QCNotificationListener {
     private String m_sessionId;
     private String m_deviceId;
 
-    private long m_lastPause;
     private int m_numActiveContext;
 
     private boolean m_usesSecureConnection = false;
@@ -107,16 +110,21 @@ enum QCMeasurement implements QCNotificationListener {
 
                 m_policy = QCPolicy.getQuantcastPolicy(m_context, m_apiKey, m_networkCode, m_context.getPackageName(), isDirectedAtKids);
                 m_manager = new QCDataManager(m_context);
-                logBeginSessionEvent(QCEvent.QC_BEGIN_LAUNCH_REASON, appLabelsOrNull, networkLabels);
-
                 setUploadEventCount(DEFAULT_UPLOAD_EVENT_COUNT);
+                boolean newSession = checkSessionId(m_context);
+                if(newSession){
+                    logBeginSessionEvent(QCEvent.QC_BEGIN_LAUNCH_REASON, appLabelsOrNull, networkLabels);
+                }else{
+                    m_manager.postEvent(QCEvent.resumeSession(m_context, m_sessionId, appLabelsOrNull, networkLabels), m_policy);
+                }
                 QCNotificationCenter.INSTANCE.postNotification(QC_NOTIF_APP_START, m_context);
             } else {
                 QCLog.i(TAG, "Resuming Quantcast");
                 //otherwise just resume
                 m_policy.updatePolicy(m_context);
                 m_manager.postEvent(QCEvent.resumeSession(m_context, m_sessionId, appLabelsOrNull, networkLabels), m_policy);
-                if (m_lastPause + getSessionTimeoutInMs() < System.currentTimeMillis()) {
+                boolean newSession = checkSessionId(m_context);
+                if (newSession) {
                     QCLog.i(TAG, "Past session timeout.  Starting new session.");
                     logBeginSessionEvent(QCEvent.QC_BEGIN_RESUME_REASON, appLabelsOrNull, networkLabels);
                 }
@@ -159,7 +167,7 @@ enum QCMeasurement implements QCNotificationListener {
             m_numActiveContext = Math.max(0, m_numActiveContext - 1);
             if (m_numActiveContext == 0) {
                 QCLog.i(TAG, "Last Activity stopped, pausing");
-                m_lastPause = System.currentTimeMillis();
+                updateSessionTimestamp();
                 m_manager.postEvent(QCEvent.pauseSession(m_context, m_sessionId, appLabels, networkLabels), m_policy);
                 QCNotificationCenter.INSTANCE.postNotification(QC_NOTIF_APP_STOP, m_context);
             }
@@ -197,6 +205,7 @@ enum QCMeasurement implements QCNotificationListener {
         if (m_optedOut) return;
         if(isMeasurementActive()){
             QCLog.i(TAG, "Calling end.");
+            updateSessionTimestamp();
             m_manager.postEvent(QCEvent.closeSessionEvent(m_context, m_sessionId, appLabels, networkLabels), m_policy);
             m_sessionId = null;
             m_numActiveContext = 0;
@@ -234,23 +243,89 @@ enum QCMeasurement implements QCNotificationListener {
     final void logBeginSessionEvent(String reason, String[] appLabels, String[] networkLabels) {
         if (m_optedOut) return;
 
-        m_sessionId = QCUtility.generateUniqueId();
+        m_sessionId = createSessionId();
         m_manager.postEvent(QCEvent.beginSessionEvent(m_context, m_userId, reason, m_sessionId, m_apiKey, m_networkCode, m_deviceId, appLabels, networkLabels), m_policy);
+    }
+
+    private static final String QC_SESSION_FILE = "QC-SessionId";
+
+    final String createSessionId(){
+        String sessionId = QCUtility.generateUniqueId();
+        saveSessionID(sessionId);
+        return sessionId;
+    }
+
+    final boolean checkSessionId(Context context){
+        boolean newSession = false;
+        File session =  context.getFileStreamPath(QC_SESSION_FILE);
+        if(session.exists() ){
+            long modified = session.lastModified();
+            //check if we are over the timeout, if so then create a new session
+            if ((System.currentTimeMillis() - modified) > getSessionTimeoutInMs()){
+                newSession = true;
+            }
+            //still time left and we dont have an id in memory?  read it
+            else if(m_sessionId == null){
+                FileInputStream fis = null;
+                try {
+                    byte buffer[] = new byte[256];
+                    fis = context.openFileInput(QC_SESSION_FILE);
+                    int length = context.openFileInput(QC_SESSION_FILE).read(buffer);
+                    m_sessionId = new String(buffer,0, length);
+                } catch (IOException e) {
+                    //last resort create a new one
+                    newSession = true;
+                }finally {
+                    if(fis != null){
+                        try {
+                            fis.close();
+                        } catch (IOException ignored) { }
+                    }
+                }
+            }
+        }else{
+            newSession = true;
+        }
+        return newSession;
+    }
+
+    private void saveSessionID(String sessionId){
+        FileOutputStream fos = null;
+        try {
+            fos = m_context.openFileOutput(QC_SESSION_FILE, Context.MODE_PRIVATE);
+            fos.write(sessionId.getBytes());
+        } catch(IOException ignored){
+            //not much we can do
+        }finally {
+            if(fos != null){
+                try {
+                    fos.close();
+                } catch (IOException ignored) { }
+            }
+        }
+    }
+
+    private void updateSessionTimestamp(){
+        File session =  m_context.getFileStreamPath(QC_SESSION_FILE);
+        if(session != null){
+            //noinspection ResultOfMethodCallIgnored
+            session.setLastModified(System.currentTimeMillis());
+        }
     }
 
 
     final long getSessionTimeoutInMs() {
         long sessionTimeoutInMs = DEFAULT_SESSION_TIMEOUT;
 
-        if (m_policy.policyIsLoaded() && m_policy.hasSessionTimeout()) {
-            sessionTimeoutInMs = m_policy.getSessionTimeout();
+        if (m_policy != null && m_policy.policyIsLoaded() && m_policy.hasSessionTimeout()) {
+            sessionTimeoutInMs = m_policy.getSessionTimeout()*1000;
         }
 
         return sessionTimeoutInMs;
     }
 
     final void logLatency(String uploadId, long time) {
-        if (m_optedOut) return;
+        if (m_optedOut || m_manager == null) return;
         m_manager.postEvent(QCEvent.logLatency(m_context, m_sessionId, uploadId, Long.toString(time)), m_policy);
     }
 
@@ -349,5 +424,4 @@ enum QCMeasurement implements QCNotificationListener {
     final QCDataManager getManager() {
         return m_manager;
     }
-
 }

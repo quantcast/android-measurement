@@ -16,6 +16,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -78,6 +79,11 @@ class QCOptOutUtility {
         }
     }
 
+    static boolean isQuantified(Context appContext){
+        File quantified = appContext.getFileStreamPath(QCMEASUREMENT_OPTOUT_STRING);
+        return quantified != null && quantified.exists();
+    }
+
     static void askEveryone(final Context context, boolean optedOut, boolean shouldUpdate) {
         new AsyncTask<Boolean, Void, Boolean>() {
 
@@ -86,7 +92,6 @@ class QCOptOutUtility {
                 boolean optedOut = booleans[0];
                 boolean shouldUpdate = booleans[1];
                 Boolean status = false;
-                //now im gonna see whats installed
                 PackageManager pm = context.getPackageManager();
                 if (pm != null) {
                     for (PackageInfo info : pm.getInstalledPackages(0)) {
@@ -94,7 +99,9 @@ class QCOptOutUtility {
                             try {
                                 Context foreignContext = context.createPackageContext(info.packageName, 0);
                                 if (shouldUpdate) {
-                                    createOptOut(foreignContext, optedOut);
+                                    if(isQuantified(foreignContext)){
+                                        createOptOut(foreignContext, optedOut);
+                                    }
                                 } else {
                                     status = isOptedOut(foreignContext, false);
                                     if (status) {
