@@ -1,5 +1,11 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.0 ##
+- Added support for Google Play Advertising Identifier
+- added static App and Network label segments
+- Swapped AsyncTask for background thread handler
+- Added programmatic way of opting out.
+
 ## Version 1.1.2 ##
 -  fixed event enqueuing for older android devices.
 -  bug fix for missing permissions on specific devices

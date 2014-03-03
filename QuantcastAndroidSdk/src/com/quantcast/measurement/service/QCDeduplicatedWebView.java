@@ -9,17 +9,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Copyright 2013 Quantcast Corp.
+ * © Copyright 2012-2014 Quantcast Corp.
  * <p/>
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
  * compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 public class QCDeduplicatedWebView extends WebView implements QCNotificationListener {
-    static final String QCMEASUREMNT_UA_PREFIX = " QuantcastSDK";
+    private static final String QCMEASUREMNT_UA_PREFIX = " QuantcastSDK";
 
     static final Pattern userAgentPattern = Pattern.compile(QCMEASUREMNT_UA_PREFIX + "/(\\d+)_(\\d+)_(\\d+)/[a-zA-Z0-9]{16}-[a-zA-Z0-9]{16}");
 

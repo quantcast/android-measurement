@@ -1,13 +1,13 @@
 /**
- * Copyright 2012 Quantcast Corp.
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
- *  compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
- *
+ * compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 package com.quantcast.measurement.service;
 
@@ -36,17 +36,17 @@ class QCDatabaseDAO extends SQLiteOpenHelper {
 
     // Table that indexes events, one per event.
     static final String EVENTS_TABLE = "events";
-    static final String EVENTS_COLUMN_ID = "id";            // primary key
-    static final String EVENTS_COLUMN_DOH = "doh";          // tables must have at least one column; this doesn't do anything other than that
+    private static final String EVENTS_COLUMN_ID = "id";            // primary key
+    private static final String EVENTS_COLUMN_DOH = "doh";          // tables must have at least one column; this doesn't do anything other than that
 
     // Table of event parameters
     // Each event has a unique ID, which is the primary key (rowid) in the events table.
     static final String EVENT_PARAMETERS_TABLE = "event";
-    static final String EVENT_PARAMETERS_COLUMN_EVENT_ID = "eventid";
-    static final String EVENT_PARAMETERS_COLUMN_NAME = "name";
-    static final String EVENT_PARAMETERS_COLUMN_VALUE = "value";
+    private static final String EVENT_PARAMETERS_COLUMN_EVENT_ID = "eventid";
+    private static final String EVENT_PARAMETERS_COLUMN_NAME = "name";
+    private static final String EVENT_PARAMETERS_COLUMN_VALUE = "value";
 
-    static final String EVENT_PARAMETERS_EVENT_ID_INDEX_NAME = "event_id_idx";
+    private static final String EVENT_PARAMETERS_EVENT_ID_INDEX_NAME = "event_id_idx";
 
     private SQLiteDatabase m_openDB;
     private int m_numOpenDBs;
@@ -86,13 +86,13 @@ class QCDatabaseDAO extends SQLiteOpenHelper {
     }
 
     @Override
-    public SQLiteDatabase getReadableDatabase(){
+    public SQLiteDatabase getReadableDatabase() {
         return getWritableDatabase();
     }
 
     @Override
-    public SQLiteDatabase getWritableDatabase(){
-        if(m_openDB == null || !m_openDB.isOpen()){
+    public SQLiteDatabase getWritableDatabase() {
+        if (m_openDB == null || !m_openDB.isOpen()) {
             m_numOpenDBs = 0;
             m_openDB = super.getWritableDatabase();
         }
@@ -101,9 +101,9 @@ class QCDatabaseDAO extends SQLiteOpenHelper {
     }
 
     @Override
-    public void close(){
+    public void close() {
         m_numOpenDBs--;
-        if(m_numOpenDBs == 0){
+        if (m_numOpenDBs == 0) {
             super.close();
             m_openDB = null;
         }

@@ -10,9 +10,9 @@ compliance with the License. See the License for the specific language governing
 permissions and limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="com.quantcast.service"
+      package="com.quantcast.measurement.service"
       android:versionCode="11"
-      android:versionName="1.1.0"
+      android:versionName="1.0.1"
       >
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="14"/>
 
@@ -29,5 +29,7 @@ permissions and limitations under the License.
         <activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen"
                 android:label="OtherName"/>
         <meta-data android:name="com.quantcast.apiKey" android:value="thevalidapikeyis-awonderfulapikey"/>
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="4030500" />
     </application>
 </manifest>

@@ -1,13 +1,13 @@
 /**
- * Copyright 2012 Quantcast Corp.
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
- *  compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
- *
+ * compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 package com.quantcast.measurement.service;
 
@@ -20,6 +20,8 @@ import android.content.res.Resources;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.UUID;
 
 class QCUtility {
@@ -27,12 +29,13 @@ class QCUtility {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCUtility.class);
 
-    public static final String API_VERSION = "1_1_2";
+    public static final String API_VERSION = "1_2_0";
 
     private static final long[] HASH_CONSTANTS = {0x811c9dc5, 0xc9dc5118};
 
     private static final String SHARED_PREFERENCES_NAME = "com.quantcast.measurement.service";
     private static final String INSTALL_ID_PREF_NAME = "applicationId";
+    private static final String USER_AD_PREF_NAME = "adPref";
 
 
     private static final Object APPLICATION_ID_LOCK = new Object();
@@ -41,6 +44,8 @@ class QCUtility {
     private static final String HTTPS_SCHEME = "https://";
 
     static String applyHash(String string) {
+        if (string == null) return null;
+
         double[] hashedStrings = new double[HASH_CONSTANTS.length];
         for (int i = 0; i < hashedStrings.length; i++) {
             hashedStrings[i] = applyUserHash(HASH_CONSTANTS[i], string);
@@ -82,13 +87,13 @@ class QCUtility {
         return appName;
     }
 
-    protected static String getAPIKey(Context context){
+    protected static String getAPIKey(Context context) {
         String apiKey = null;
         PackageManager pm = context.getPackageManager();
-        if(pm != null){
+        if (pm != null) {
             try {
                 ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-                if(ai != null && ai.metaData != null){
+                if (ai != null && ai.metaData != null) {
                     apiKey = ai.metaData.getString("com.quantcast.apiKey");
                 }
             } catch (PackageManager.NameNotFoundException ignored) {
@@ -124,6 +129,19 @@ class QCUtility {
         }
     }
 
+    static void saveUserAdPref(Context context, boolean userAdPref) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+        QCLog.i(TAG, "Saving advertising preference");
+        Editor editor = sharedPreferences.edit();
+        editor.putBoolean(USER_AD_PREF_NAME, userAdPref);
+        editor.commit();
+    }
+
+    static boolean getUserAdPref(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+        return sharedPreferences.getBoolean(USER_AD_PREF_NAME, false);
+    }
+
     protected static void dumpAppInstallID(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
         Editor editor = sharedPreferences.edit();
@@ -135,25 +153,42 @@ class QCUtility {
         return (QuantcastClient.isUsingSecureConnections() ? HTTPS_SCHEME : HTTP_SCHEME) + schemelessUrl;
     }
 
-    protected static String encodeStringArray(String[] values){
+    protected static String encodeStringArray(String[] values) {
         if (values == null || values.length == 0) return null;
 
         String valueString = null;
-        for(String value : values){
-            if(value != null){
+        for (String value : values) {
+            if (value != null) {
                 try {
                     String encodedValue = URLEncoder.encode(value, "UTF-8");
                     //encodes space with "+" so change it to %20
                     encodedValue = encodedValue.replaceAll("\\+", "%20");
-                    if(valueString == null){
+                    if (valueString == null) {
                         valueString = encodedValue;
-                    }else{
+                    } else {
                         valueString += "," + encodedValue;
                     }
-                } catch (UnsupportedEncodingException ignored) { }
+                } catch (UnsupportedEncodingException ignored) {
+                }
             }
         }
-        return  valueString;
+        return valueString;
+    }
+
+    static String[] combineLabels(String[] firstLabels, String[] secondLabels){
+        if(secondLabels == null){
+            return firstLabels;
+        }
+        if(firstLabels == null){
+            return  secondLabels;
+        }
+
+        HashSet<String> set = new HashSet<String>(Arrays.asList(firstLabels));
+        set.addAll(Arrays.asList(secondLabels));
+
+        String[] returnArray = new String[set.size()];
+        set.toArray(returnArray);
+        return returnArray;
     }
 
 }

@@ -1,12 +1,13 @@
-/*
- * Copyright 2012 Quantcast Corp.
+/**
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
  * compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 
 package com.quantcast.measurement.service;
@@ -86,14 +87,15 @@ class QCEvent {
     static final String QC_EVENT_LATENCY = "latency";
     static final String QC_EVENT_SDKERROR = "sdkerror";
 
-    protected static final String QC_BEGIN_LAUNCH_REASON = "launch";
-    protected static final String QC_BEGIN_RESUME_REASON = "resume";
-    protected static final String QC_BEGIN_USERHASH_REASON = "userhash";
+    static final String QC_BEGIN_LAUNCH_REASON = "launch";
+    static final String QC_BEGIN_RESUME_REASON = "resume";
+    static final String QC_BEGIN_USERHASH_REASON = "userhash";
+    static final String QC_BEGIN_ADPREF_REASON = "adprefchange";
 
     static QCEvent beginSessionEvent(Context context, String userhash,
-                                            String reason, String session,
-                                            String apiKey, String networkCode,
-                                            String deviceId, String[] appLabels, String[] networkLabel) {
+                                     String reason, String session,
+                                     String apiKey, String networkCode,
+                                     String deviceId, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(session);
 
         e.addParameter(QC_EVENT_KEY, QC_EVENT_LOAD);
@@ -126,13 +128,13 @@ class QCEvent {
                         } catch (Exception e1) {
                             File filesDir = context.getFilesDir();
                             //error getting install time so get next best
-                            if(filesDir != null){
+                            if (filesDir != null) {
                                 e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(filesDir.lastModified()));
                             }
                         }
                     } else {
                         File filesDir = context.getFilesDir();
-                        if(filesDir != null){
+                        if (filesDir != null) {
                             e.addParameter(QC_INSTALLDATE_KEY, String.valueOf(filesDir.lastModified()));
                         }
                     }
@@ -146,11 +148,11 @@ class QCEvent {
         if (windowManager != null) {
             Display d = windowManager.getDefaultDisplay();
             String dims;
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2){
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
                 Point point = new Point();
                 d.getSize(point);
                 dims = String.format("%dx%dx32", point.x, point.y);
-            }else{
+            } else {
                 //noinspection deprecation
                 dims = String.format("%dx%dx32", d.getWidth(), d.getHeight());
             }
@@ -168,7 +170,7 @@ class QCEvent {
 
         TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
         if (tel != null) {
-            try{
+            try {
                 String carrierInfo = tel.getNetworkOperator();
                 //no network?  then try the sim
                 if (carrierInfo == null || carrierInfo.length() <= 0) {
@@ -182,9 +184,10 @@ class QCEvent {
                         e.addParameter(QC_MNC_KEY, carrierInfo.substring(3));
                     }
                 }
-            }catch(SecurityException ignored){   }
+            } catch (SecurityException ignored) {
+            }
 
-            try{
+            try {
                 String countryCode = tel.getNetworkCountryIso();
                 if (countryCode == null || countryCode.length() == 0) {
                     countryCode = tel.getSimCountryIso();
@@ -192,9 +195,10 @@ class QCEvent {
                 if (countryCode != null && countryCode.length() > 0) {
                     e.addParameter(QC_COUNTRYCODE_KEY, countryCode);
                 }
-            }catch(SecurityException ignored){   }
+            } catch (SecurityException ignored) {
+            }
 
-            try{
+            try {
                 String carrierName = tel.getNetworkOperatorName();
                 if (carrierName == null || carrierName.length() == 0) {
                     carrierName = tel.getSimOperatorName();
@@ -202,7 +206,8 @@ class QCEvent {
                 if (carrierName != null && carrierName.length() > 0) {
                     e.addParameter(QC_CARRIERNAME_KEY, carrierName);
                 }
-            }catch(SecurityException ignored){   }
+            } catch (SecurityException ignored) {
+            }
         }
 
         int screenLayout = context.getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
@@ -215,10 +220,10 @@ class QCEvent {
         e.addParameter(QC_MANUFACTURER_KEY, Build.MANUFACTURER);
 
         Locale locale = Locale.getDefault();
-        try{
+        try {
             e.addParameter(QC_LOCALECOUNTRY_KEY, locale.getISO3Country());
             e.addParameter(QC_LOCALELANG_KEY, locale.getISO3Language());
-        }catch(MissingResourceException mre){
+        } catch (MissingResourceException mre) {
             e.addParameter(QC_LOCALECOUNTRY_KEY, "XX");
             e.addParameter(QC_LOCALELANG_KEY, "xx");
         }
@@ -309,7 +314,7 @@ class QCEvent {
         return e;
     }
 
-    static QCEvent logOptionalEvent(Context c, String sessionId, Map<String, String> params, String[] appLabels, String[] networkLabel){
+    static QCEvent logOptionalEvent(Context c, String sessionId, Map<String, String> params, String[] appLabels, String[] networkLabel) {
         QCEvent e = new QCEvent(sessionId);
         e.addParameters(params);
         String appInstallId = QCUtility.getAppInstallId(c);
@@ -323,7 +328,7 @@ class QCEvent {
 
     static QCEvent dataBaseEventWithPolicyCheck(Long eventID, Map<String, String> params, QCPolicy policy) {
         //if we are blacked out or the event key is blacklisted, then we can't send any data to the servers
-        if (policy == null || !policy.policyIsLoaded() || policy.isBlackedOut() || policy.isBlacklisted(QC_EVENT_KEY)){
+        if (policy == null || !policy.policyIsLoaded() || policy.isBlackedOut() || policy.isBlacklisted(QC_EVENT_KEY)) {
             return null;
         }
 
@@ -376,8 +381,8 @@ class QCEvent {
         }
     }
 
-    void addParameters(Map<String, String> params){
-        if(params != null && params.size() > 0){
+    void addParameters(Map<String, String> params) {
+        if (params != null && params.size() > 0) {
             m_parameters.putAll(params);
         }
     }

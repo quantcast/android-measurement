@@ -60,6 +60,17 @@ public class QCNetworkMeasurement {
     static final String QC_EVENT_NETEVENT = "netevent";
 
     /**
+     * Used to set static network labels.   When set, the label(s) will be automatically passed to all calls which take labels.
+     * This is a convenience method for applications that segment their audience by a fairly static group of labels.
+     * This property can be changed at any time.
+     *
+     * @param labels       An array of network segment labels
+     */
+    public static void setNetworkLabels(String... labels){
+        QCMeasurement.INSTANCE.setNetworkLabels(labels);
+    }
+
+    /**
      * Used when initially starting the SDK in the main activity.  This should be called in EVERY Activity's onStart() method.  The context and api key are required.
      *
      * @param context       The activity context.  Note that the SDK will use the application context.

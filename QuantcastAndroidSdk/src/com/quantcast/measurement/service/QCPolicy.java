@@ -1,19 +1,18 @@
 /**
- * Copyright 2012 Quantcast Corp.
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
- *  compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
- *
+ * compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 package com.quantcast.measurement.service;
 
 import android.content.Context;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.telephony.TelephonyManager;
 
 import org.apache.http.HttpResponse;
@@ -72,7 +71,7 @@ class QCPolicy {
         builder.appendQueryParameter(POLICY_REQUEST_DEVICE_TYPE_PARAMETER, POLICY_REQUEST_DEVICE_TYPE);
 
         String mcc = null;
-        try{
+        try {
             TelephonyManager tel = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
             if (tel != null) {
                 mcc = tel.getNetworkCountryIso();
@@ -80,7 +79,8 @@ class QCPolicy {
                     mcc = tel.getSimCountryIso();
                 }
             }
-        }catch (SecurityException ignored){}
+        } catch (SecurityException ignored) {
+        }
 
         if (mcc == null) {
             mcc = Locale.getDefault().getCountry();
@@ -89,14 +89,14 @@ class QCPolicy {
             builder.appendQueryParameter(POLICY_REQUEST_DEVICE_COUNTRY, mcc);
         }
 
-        if(apiKey != null){
+        if (apiKey != null) {
             builder.appendQueryParameter(POLICY_REQUEST_API_KEY_PARAMETER, apiKey);
-        }else{
+        } else {
             builder.appendQueryParameter(POLICY_REQUEST_NETWORK_CODE_PARAMETER, networkCode);
             builder.appendQueryParameter(POLICY_REQUEST_PACKAGE_PARAMETER, packageName);
         }
 
-        if(kidDirected){
+        if (kidDirected) {
             builder.appendQueryParameter(POLICY_REQUEST_KID_DIRECTED_PARAMETER, "YES");
         }
 
@@ -118,7 +118,7 @@ class QCPolicy {
             m_policyIsLoaded = false;
         } else {
             if (QCReachability.isConnected(context)) {
-                getPolicy(context, m_policyURL);
+                getPolicy(context);
             } else {
                 QCLog.i(TAG, "No connection.  Policy could not be downloaded. Using cache");
                 m_policyIsLoaded = checkPolicy(context, true);
@@ -128,7 +128,7 @@ class QCPolicy {
 
     public void updatePolicy(Context context) {
         if (QCReachability.isConnected(context)) {
-            getPolicy(context, m_policyURL);
+            getPolicy(context);
         } else {
             QCLog.i(TAG, "No connection.  Policy could not be updated. Using cache.");
             m_policyIsLoaded = checkPolicy(context, true);
@@ -140,54 +140,41 @@ class QCPolicy {
     }
 
 
-    private void getPolicy(final Context context, String policyURL) {
+    private void getPolicy(Context context) {
 
         //if we are blacked out we cant go get the policy yet
         if (isBlackedOut()) return;
 
-        new AsyncTask<String, Void, Boolean>() {
-
-            @Override
-            protected Boolean doInBackground(String... strings) {
-                boolean loadedPolicy = checkPolicy(context, false);
-                if (!loadedPolicy) {
-                    String jsonString = null;
-                    DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
-                    InputStream inputStream = null;
+        boolean loadedPolicy = checkPolicy(context, false);
+        if (!loadedPolicy) {
+            String jsonString = null;
+            DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
+            InputStream inputStream = null;
+            try {
+                HttpGet method = new HttpGet(m_policyURL);
+                HttpResponse response = defaultHttpClient.execute(method);
+                inputStream = response.getEntity().getContent();
+                jsonString = readStreamToString(inputStream);
+            } catch (Exception e) {
+                QCLog.e(TAG, "Could not download policy", e);
+                QCMeasurement.INSTANCE.logSDKError("policy-download-failure", e.getMessage(), null);
+            } finally {
+                if (inputStream != null) {
                     try {
-                        HttpGet method = new HttpGet(strings[0]);
-                        HttpResponse response = defaultHttpClient.execute(method);
-                        inputStream = response.getEntity().getContent();
-                        jsonString = readStreamToString(inputStream);
-                    } catch (Exception e) {
-                        QCLog.e(TAG, "Could not download policy", e);
-                        QCMeasurement.INSTANCE.logSDKError("policy-download-failure", e.getMessage(), null);
-                    } finally {
-                        if (inputStream != null) {
-                            try {
-                                inputStream.close();
-                            } catch (IOException ignored) {
-                            }
-                        }
-                    }
-                    if (jsonString != null) {
-                        savePolicy(context, jsonString);
-                        loadedPolicy = parsePolicy(jsonString);
+                        inputStream.close();
+                    } catch (IOException ignored) {
                     }
                 }
-                return loadedPolicy;
             }
-
-            @Override
-            protected void onPostExecute(Boolean loadedPolicy) {
-                m_policyIsLoaded = loadedPolicy;
-                QCNotificationCenter.INSTANCE.postNotification(QC_NOTIF_POLICY_UPDATE, null);
+            if (jsonString != null) {
+                savePolicy(context, jsonString);
+                loadedPolicy = parsePolicy(jsonString);
             }
-        }.execute(policyURL);
+        }
+        m_policyIsLoaded = loadedPolicy;
     }
 
 
-    //done only in AsyncTask
     private boolean parsePolicy(String policyJsonString) {
 
         boolean successful = true;
@@ -257,7 +244,6 @@ class QCPolicy {
     static final String POLICY_DIRECTORY = "com.quantcast";
     static final String POLICY_FILENAME = "qc-policy.json";
 
-    //done only in AsyncTask
     private void savePolicy(Context context, String policy) {
         File base = context.getDir(POLICY_DIRECTORY, Context.MODE_PRIVATE);
         File policyFile = new File(base, POLICY_FILENAME);
@@ -337,17 +323,18 @@ class QCPolicy {
     private String readStreamToString(InputStream input) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         BufferedReader reader = null;
-        try{
+        try {
             reader = new BufferedReader(new InputStreamReader(input));
             String line;
             while ((line = reader.readLine()) != null) {
                 stringBuilder.append(line);
             }
-        }finally {
+        } finally {
             if (reader != null) {
-                try{
+                try {
                     reader.close();
-                }catch (IOException ignored){}
+                } catch (IOException ignored) {
+                }
             }
         }
         return stringBuilder.toString();

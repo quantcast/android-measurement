@@ -1,19 +1,20 @@
 /**
- * Copyright 2012 Quantcast Corp.
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
- *  compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
- *
+ * compliance with the License. See the License for the specific language governing
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 package com.quantcast.measurement.service;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.util.Log;
 import android.webkit.WebView;
 
@@ -25,6 +26,7 @@ import java.lang.reflect.Method;
  * This exposes only those methods that may be called by developers using the Quantcast Measurement API.
  */
 public class QuantcastClient {
+
 
     /**
      * Used when initially starting the SDK in the main activity.  This should be called in EVERY Activity's onStart() method.  The context and api key are required.
@@ -49,7 +51,7 @@ public class QuantcastClient {
      * @param context The activity context.  Note that the SDK will use the application context.
      */
     public static void activityStart(Context context) {
-        activityStart(context, null, null, null);
+        activityStart(context, null);
     }
 
     /**
@@ -69,7 +71,7 @@ public class QuantcastClient {
      * Cleans up any connections or data being collected by Quantcast SDK.  Should be called in every Activity's onStop()
      */
     public static void activityStop() {
-        activityStop(null);
+        activityStop((String)null);
     }
 
     /**
@@ -80,7 +82,7 @@ public class QuantcastClient {
      *               For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
      *               and one for users who have purchased an upgrade.
      */
-    public static void activityStop(String[] labels) {
+    public static void activityStop(String... labels) {
         QCMeasurement.INSTANCE.stop(labels);
     }
 
@@ -92,10 +94,10 @@ public class QuantcastClient {
      *               Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
      */
     public static String recordUserIdentifier(String userId) {
-        return recordUserIdentifier(userId, null);
+        return recordUserIdentifier(userId, (String)null);
     }
 
-    public static String recordUserIdentifier(String userId, String[] labelsOrNull) {
+    public static String recordUserIdentifier(String userId, String... labelsOrNull) {
         return QCMeasurement.INSTANCE.recordUserIdentifier(userId, labelsOrNull);
     }
 
@@ -115,23 +117,6 @@ public class QuantcastClient {
     /**
      * Logs an app-defined event can be arbitrarily defined.
      *
-     * @param name  A string that identifies the event being logged. Hierarchical information can be indicated by using a left-to-right notation with a period as a separator.
-     *              For example, logging one event named "button.left" and another named "button.right" will create three reportable items in Quantcast App Measurement:
-     *              "button.left", "button.right", and "button".
-     *              There is no limit on the cardinality that this hierarchical scheme can create,
-     *              though low-frequency events may not have an audience report on due to the lack of a statistically significant population.
-     * @param label (Optional) A label is any arbitrary string that you want to be associated with this event, and will create a
-     *              second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
-     *              For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
-     *              and one for users who have purchased an upgrade.
-     */
-    public static void logEvent(String name, String label) {
-        logEvent(name, new String[]{label});
-    }
-
-    /**
-     * Logs an app-defined event can be arbitrarily defined.
-     *
      * @param name   A string that identifies the event being logged. Hierarchical information can be indicated by using a left-to-right notation with a period as a separator.
      *               For example, logging one event named "button.left" and another named "button.right" will create three reportable items in Quantcast App Measurement:
      *               "button.left", "button.right", and "button".
@@ -142,8 +127,19 @@ public class QuantcastClient {
      *               For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
      *               and one for users who have purchased an upgrade.
      */
-    public static void logEvent(String name, String[] labels) {
+    public static void logEvent(String name, String... labels) {
         QCMeasurement.INSTANCE.logEvent(name, labels);
+    }
+
+    /**
+     * Used to set static application labels.   When set, the label(s) will be automatically passed to all calls which take labels.
+     * This is a convenience method for applications that segment their audience by a fairly static group of labels.
+     * This property can be changed at any time.
+     *
+     * @param labels       An array of app segment labels
+     */
+    public static void setAppLabels(String... labels){
+        QCMeasurement.INSTANCE.setAppLabels(labels);
     }
 
     /**
@@ -155,23 +151,6 @@ public class QuantcastClient {
      */
     public static void setUploadEventCount(int uploadEventCount) {
         QCMeasurement.INSTANCE.setUploadEventCount(uploadEventCount);
-    }
-
-    /**
-     * Use this to control whether or not the service should collect location data. You should only enabled location gathering if your app has some location-aware purpose.
-     *
-     * @param enableLocationGathering Set to true to enable location, false to disable
-     */
-    public static void setEnableLocationGathering(boolean enableLocationGathering) {
-        QCLog.Tag t = new QCLog.Tag(QCMeasurement.class);
-        QCLog.w(t, "Location is now an optional class.  To enable use QCLocation.setEnableLocationGathering(true) instead of this method.");
-        try {
-            Class c = Class.forName("com.quantcast.measurement.service.QCLocation");
-            Method method = c.getMethod("setEnableLocationGathering", new Class[]{boolean.class});
-            method.invoke(null, enableLocationGathering);
-        } catch (Exception e) {
-            QCLog.e(t, "QCLocation class not found.  It can be found in the optional-src directory.  Please add it to the package.");
-        }
     }
 
     /**
@@ -229,6 +208,48 @@ public class QuantcastClient {
         return QCOptOutUtility.isOptedOut(context);
     }
 
+    public static void setCollectionEnabled(boolean optedOut){
+        QCMeasurement.INSTANCE.setOptOut(optedOut);
+    }
+
+    public static void showQuantcastPrivacyPolicy(Activity activity){
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.quantcast.com/privacy/"));
+        activity.startActivity(browserIntent);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+    /****  DEPRECATED METHODS -  added for backwards compatibility ******/
+
+
+
+    /**
+     * Use this to control whether or not the service should collect location data. You should only enabled location gathering if your app has some location-aware purpose.
+     *
+     * @param enableLocationGathering Set to true to enable location, false to disable
+     * @deprecated QCLocation is now an optional class found in the optional-src directory. Use QCLocation.setEnableLocationGathering(true)."
+     */
+    @Deprecated
+    public static void setEnableLocationGathering(boolean enableLocationGathering) {
+        QCLog.Tag t = new QCLog.Tag(QCMeasurement.class);
+        QCLog.w(t, "Location is now an optional class.  To enable use QCLocation.setEnableLocationGathering(true) instead of this method.");
+        try {
+            Class c = Class.forName("com.quantcast.measurement.service.QCLocation");
+            Method method = c.getMethod("setEnableLocationGathering", new Class[]{boolean.class});
+            method.invoke(null, enableLocationGathering);
+        } catch (Exception e) {
+            QCLog.e(t, "QCLocation class not found.  It can be found in the optional-src directory.  Please add it to the package.");
+        }
+    }
 
     /**
      * Start a new measurement session. Should be called in the main activity's onCreate method.

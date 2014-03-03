@@ -1,12 +1,13 @@
-/*
- * Copyright 2012 Quantcast Corp.
+/**
+ * © Copyright 2012-2014 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
  * https://www.quantcast.com and click your agreement to the License and (2) are in
  * compliance with the License. See the License for the specific language governing
- * permissions and limitations under the License.
+ * permissions and limitations under the License. Unauthorized use of this file constitutes
+ * copyright infringement and violation of law.
  */
 
 package com.quantcast.measurement.service;
@@ -14,12 +15,9 @@ package com.quantcast.measurement.service;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDatabaseCorruptException;
-import android.os.AsyncTask;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.RejectedExecutionException;
 
 class QCDataManager {
 
@@ -27,64 +25,96 @@ class QCDataManager {
 
     private static final int MAX_UPLOAD_SIZE = 200;
     private static final int MIN_UPLOAD_SIZE = 3;
-    private static final int DEFAULT_UPLOAD_EVENT_COUNT = 25;
+    static final int DEFAULT_UPLOAD_EVENT_COUNT = 25;
 
     private long m_eventCount;
     private final QCDataUploader m_uploader;
     private int m_uploadCount;
     private int m_maxUploadCount;
-    AsyncTask<Void, Void, Integer> m_uploadTask;
 
+    private boolean m_isUploading;
 
-    private final LinkedList<QCEvent> m_queue;
     private final QCDatabaseDAO m_database;
 
 
     QCDataManager(Context context) {
         m_database = new QCDatabaseDAO(context);
         m_uploader = new QCDataUploader();
-        m_queue = new LinkedList<QCEvent>();
         m_uploadCount = DEFAULT_UPLOAD_EVENT_COUNT;
         m_maxUploadCount = MAX_UPLOAD_SIZE;
         m_eventCount = m_database.numberOfEvents();
-    }
-
-   void launchEvent(QCEvent event, QCPolicy policy){
-       try{
-           AsyncTask<QCEvent, Void, Integer> task = newDBTask(policy);
-           task.execute(event);
-       }catch (RejectedExecutionException ree){
-           m_queue.offer(event);
-       }
-   }
-
-    void checkQueuedEvent(QCPolicy policy){
-        QCEvent next = m_queue.poll();
-        if(next != null){
-            launchEvent(next, policy);
-        }
-    }
-
-    boolean isUploading(){
-        return m_uploadTask != null && (m_uploadTask.getStatus() != AsyncTask.Status.FINISHED);
+        m_isUploading = false;
     }
 
     void postEvent(QCEvent event, QCPolicy policy) {
         //if we are blacked out then we won't save anything
         if (policy.isBlackedOut()) return;
-        launchEvent(event, policy);
+
+        boolean forceUpload = event.shouldForceUpload();
+        int written = 0;
+        try {
+            written = m_database.writeEvents(Arrays.asList(event));
+        } catch (SQLiteDatabaseCorruptException dbc) {
+            QCLog.e(TAG, "DB Write error", dbc);
+            m_database.deleteDB(QCMeasurement.INSTANCE.getAppContext());
+        } catch (OutOfMemoryError oom) {
+            QCLog.e(TAG, "DB Write error", oom);
+            System.gc();
+        }
+        if (written > 0) {
+            m_eventCount += written;
+            QCLog.i(TAG, "Successfully wrote " + written + " events! total: " + m_eventCount);
+            if (policy != null && QCMeasurement.INSTANCE.isConnected() && (forceUpload || (m_eventCount >= m_uploadCount))) {
+                uploadEvents(policy);
+            }
+        } else {
+            QCLog.w(TAG, "DB Write canceled or nothing written");
+        }
     }
 
     void uploadEvents(QCPolicy policy) {
         //if we don't have a policy or are blacked out then we cant send this data
-        if (policy.policyIsLoaded() && !policy.isBlackedOut() && !isUploading()) {
-            try{
-                m_uploadTask = newUploadTask(policy);
-                m_uploadTask.execute();
-            }catch (RejectedExecutionException ree){
-                //if rejected then ignore. We can try again later
-                m_uploadTask = null;
+        if (policy.policyIsLoaded() && !policy.isBlackedOut() && !m_isUploading) {
+            m_isUploading = true;
+            QCLog.i(TAG, "Starting upload...");
+            long startTime = System.currentTimeMillis();
+            int removed = 0;
+            String uploadId = null;
+            try {
+                SQLiteDatabase db = m_database.getWritableDatabase();
+                List<QCEvent> send = m_database.getEvents(db, m_maxUploadCount, policy);
+                uploadId = m_uploader.synchronousUploadEvents(send);
+                if (uploadId != null) {
+                    boolean success = m_database.removeEvents(db, send);
+                    if (success) {
+                        removed = send.size();
+                        QCLog.i(TAG, "Successfully upload " + removed + " events!");
+                    } else {
+                        QCLog.e(TAG, "Failed to remove " + send.size() + " events");
+                    }
+                } else {
+                    QCLog.e(TAG, "Failed to upload " + send.size() + " events");
+                }
+            } catch (SQLiteDatabaseCorruptException dbc) {
+                m_database.deleteDB(QCMeasurement.INSTANCE.getAppContext());
+                QCLog.e(TAG, "DB upload error", dbc);
+            } catch (OutOfMemoryError oom) {
+                QCLog.e(TAG, "DB upload error", oom);
+                System.gc();
+            } catch (Throwable t) {
+                //cancel this call and move on
+                QCLog.e(TAG, "DB upload error", t);
+            } finally {
+                m_database.close();
             }
+
+            if (removed > 0) {
+                m_eventCount = Math.max(0, m_eventCount - removed);
+                QCMeasurement.INSTANCE.logLatency(uploadId, System.currentTimeMillis() - startTime);
+            } else {
+                QCLog.w(TAG, "DB upload canceled or nothing removed");
+            }
+            m_isUploading = false;
         }
     }
 
@@ -94,105 +124,6 @@ class QCDataManager {
 
     void setMaxUploadCount(int maxUploadCount) {
         this.m_maxUploadCount = Math.max(MIN_UPLOAD_SIZE, maxUploadCount);
-    }
-
-    AsyncTask<QCEvent, Void, Integer> newDBTask(final QCPolicy policy) {
-        return new AsyncTask<QCEvent, Void, Integer>() {
-            private boolean forceUpload;
-
-            @Override
-            protected Integer doInBackground(QCEvent... qcEvents) {
-                forceUpload = qcEvents[0].shouldForceUpload();
-                int written = 0;
-                try {
-                    written = m_database.writeEvents(Arrays.asList(qcEvents));
-                } catch (SQLiteDatabaseCorruptException dbc) {
-                    QCLog.e(TAG, "DB Write error", dbc);
-                    m_database.deleteDB(QCMeasurement.INSTANCE.getAppContext());
-                    this.cancel(true);
-                } catch (OutOfMemoryError oom) {
-                    QCLog.e(TAG, "DB Write error", oom);
-                    System.gc();
-                    this.cancel(true);
-                } catch (Throwable t) {
-                    QCLog.e(TAG, "DB Write error", t);
-                    //cancel this call and move on
-                    this.cancel(true);
-                }
-                return written;
-            }
-
-            @Override
-            protected void onPostExecute(Integer written) {
-                if (!this.isCancelled() && written > 0) {
-                    m_eventCount += written;
-                    QCLog.i(TAG, "Successfully wrote " + written + " events! total: " + m_eventCount);
-                    if (policy != null && (forceUpload || (m_eventCount >= m_uploadCount))) {
-                        uploadEvents(policy);
-                    }
-                }else{
-                    QCLog.w(TAG, "DB Write canceled or nothing written");
-                }
-                checkQueuedEvent(policy);
-            }
-        };
-    }
-
-    AsyncTask<Void, Void, Integer> newUploadTask(final QCPolicy policy) {
-        return new AsyncTask<Void, Void, Integer>() {
-            private String uploadId;
-            private long startTime;
-
-            @Override
-            protected void onPreExecute() {
-                startTime = System.currentTimeMillis();
-            }
-
-            @Override
-            protected Integer doInBackground(Void... voids) {
-                QCLog.i(TAG, "Starting upload...");
-                int removed = 0;
-                try {
-                        SQLiteDatabase db = m_database.getWritableDatabase();
-                        List<QCEvent> send = m_database.getEvents(db, m_maxUploadCount, policy);
-                        uploadId = m_uploader.synchronousUploadEvents(send);
-                        if (uploadId != null) {
-                            boolean success = m_database.removeEvents(db, send);
-                            if(success){
-                                removed = send.size();
-                                QCLog.i(TAG, "Successfully upload " + removed + " events!");
-                            }else{
-                                QCLog.e(TAG, "Failed to remove " + send.size() + " events");
-                            }
-                        } else {
-                            QCLog.e(TAG, "Failed to upload " + send.size() + " events");
-                        }
-                } catch (SQLiteDatabaseCorruptException dbc) {
-                    m_database.deleteDB(QCMeasurement.INSTANCE.getAppContext());
-                    QCLog.e(TAG, "DB upload error", dbc);
-                } catch (OutOfMemoryError oom) {
-                    QCLog.e(TAG, "DB upload error", oom);
-                    System.gc();
-                } catch (Throwable t) {
-                    //cancel this call and move on
-                    QCLog.e(TAG, "DB upload error", t);
-                } finally {
-                    m_database.close();
-                }
-                return removed;
-            }
-
-            @Override
-            protected void onPostExecute(Integer removed) {
-                if (!this.isCancelled() && removed > 0) {
-                    m_eventCount = Math.max(0, m_eventCount - removed);
-                    QCMeasurement.INSTANCE.logLatency(uploadId, System.currentTimeMillis() - startTime);
-                }else{
-                    QCLog.w(TAG, "DB upload canceled or nothing removed");
-                }
-                m_uploadTask = null;
-            }
-        };
     }
 
     long getEventCount() {

@@ -136,18 +136,20 @@ public enum QCLocation implements QCNotificationListener{
         float bestAccuracy = Float.MAX_VALUE;
         List<String> matchingProviders = _locManager.getAllProviders();
         for (String provider : matchingProviders) {
-            Location location = _locManager.getLastKnownLocation(provider);
-            if (location != null) {
-                float accuracy = location.getAccuracy();
-                long time = location.getTime();
+            try{
+                Location location = _locManager.getLastKnownLocation(provider);
+                if (location != null) {
+                    float accuracy = location.getAccuracy();
+                    long time = location.getTime();
 
-                //accuracy of 0 means unknown, not perfect accuracy
-                if (accuracy > 0.0 && time >= acceptableTimestamp && accuracy <= bestAccuracy) {
-                    retval = location;
-                    bestAccuracy = accuracy;
-                    acceptableTimestamp = time;
+                    //accuracy of 0 means unknown, not perfect accuracy
+                    if (accuracy > 0.0 && time >= acceptableTimestamp && accuracy <= bestAccuracy) {
+                        retval = location;
+                        bestAccuracy = accuracy;
+                        acceptableTimestamp = time;
+                    }
                 }
-            }
+            }catch(SecurityException ignored){  }
         }
         return retval;
     }
