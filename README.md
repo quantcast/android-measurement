@@ -167,7 +167,7 @@ Use labels to create Audience Segments, or groups of users that share a common p
 There are two ways to assign labels.  The first is via the `appLabels` setter.  Use setAppLabels to record labels related to user properties.  For example, to assign two labels, “purchaser.ebook” and “sharer.onFB”, you could do this:
 
 ``` objective-c
-QuantcastClient.setAppLabels("purchaser.ebook", “sharer.onFB”);
+QuantcastClient.setAppLabels("purchaser.ebook", "sharer.onFB");
 ```
 
 Using this has the effect of passing these labels with every method call of the Quantcast SDK.  At any time however, you can temporarily add to the labels you’ve assigned using `appLabels` by setting the `labels:` argument in your Quantcast method call.  
@@ -175,8 +175,8 @@ Using this has the effect of passing these labels with every method call of the 
 Here is an example that adds the label “sharer.firstShare” in addition to the labels you’ve already assigned (“sharer.onFB”, “purchaser.ebook”) via the `appLabels` property.  This example uses the `logEvent:withLabels:` method, which you can learn about under [Tracking App Events](#tracking-app-events).
 
 ```objective-c
-String additionalLabel = @"sharer.firstShare";
-String theEventStr = @"tweeted";
+String additionalLabel = "sharer.firstShare";
+String theEventStr = "tweeted";
 QuantcastClient.logEvent(theEventStr, additionalLabel);
 ```
 
