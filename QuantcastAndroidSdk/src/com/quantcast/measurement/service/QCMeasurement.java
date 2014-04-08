@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
@@ -529,7 +530,7 @@ enum QCMeasurement implements QCNotificationListener {
         CookieSyncManager.createInstance(m_context);
         CookieManager cookieManager = CookieManager.getInstance();
         Calendar cal = GregorianCalendar.getInstance();
-        SimpleDateFormat fmt = new SimpleDateFormat("EEE, dd-MMM-yyyy H:m:s z");
+        SimpleDateFormat fmt = new SimpleDateFormat("EEE, dd-MMM-yyyy H:m:s z", Locale.US);
         fmt.setTimeZone(TimeZone.getTimeZone("GMT"));
         if (add) {
             cal.add(Calendar.YEAR, 10);

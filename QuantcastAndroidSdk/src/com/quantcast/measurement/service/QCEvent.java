@@ -12,6 +12,7 @@
 
 package com.quantcast.measurement.service;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -55,7 +56,7 @@ class QCEvent {
     static final String QC_USERHASH_KEY = "uh";
     static final String QC_SCREENRES_KEY = "sr";
     static final String QC_DST_KEY = "dst";
-    static final String QC_TIMEZONE_KEY = "tz";
+    static final String QC_TIMEZONE_KEY = "tzo";
     static final String QC_MCC_KEY = "mcc";
     static final String QC_COUNTRYCODE_KEY = "icc";
     static final String QC_MNC_KEY = "mnc";
@@ -92,6 +93,7 @@ class QCEvent {
     static final String QC_BEGIN_USERHASH_REASON = "userhash";
     static final String QC_BEGIN_ADPREF_REASON = "adprefchange";
 
+    @TargetApi(13)
     static QCEvent beginSessionEvent(Context context, String userhash,
                                      String reason, String session,
                                      String apiKey, String networkCode,
@@ -151,10 +153,10 @@ class QCEvent {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
                 Point point = new Point();
                 d.getSize(point);
-                dims = String.format("%dx%dx32", point.x, point.y);
+                dims = String.format(Locale.US, "%dx%dx32", point.x, point.y);
             } else {
                 //noinspection deprecation
-                dims = String.format("%dx%dx32", d.getWidth(), d.getHeight());
+                dims = String.format(Locale.US, "%dx%dx32", d.getWidth(), d.getHeight());
             }
             e.addParameter(QC_SCREENRES_KEY, dims);
         }

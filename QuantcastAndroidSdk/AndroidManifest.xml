@@ -11,25 +11,25 @@ permissions and limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.quantcast.measurement.service"
-      android:versionCode="11"
-      android:versionName="1.0.1"
       >
     <uses-sdk android:minSdkVersion="8" android:targetSdkVersion="14"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
             android:label="@string/app_name"
+            android:allowBackup="false"
             >
         <receiver android:name="com.quantcast.measurement.service.QCReferrerReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.android.vending.INSTALL_REFERRER" />
             </intent-filter>
-            <meta-data android:name="forward.ToTest"
-                       android:value="com.quantcast.measurement.service.QCReferrerReceiver_T" />
         </receiver>
         <activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen"
                 android:label="OtherName"/>
-        <meta-data android:name="com.quantcast.apiKey" android:value="thevalidapikeyis-awonderfulapikey"/>
-        <meta-data android:name="com.google.android.gms.version"
-            android:value="4030500" />
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
     </application>
 </manifest>

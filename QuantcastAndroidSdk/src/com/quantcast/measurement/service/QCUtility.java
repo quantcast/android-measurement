@@ -29,7 +29,7 @@ class QCUtility {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCUtility.class);
 
-    public static final String API_VERSION = "1_2_0";
+    public static final String API_VERSION = "1_2_1";
 
     private static final long[] HASH_CONSTANTS = {0x811c9dc5, 0xc9dc5118};
 

@@ -1,5 +1,9 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.1 ##
+- Updated documentation for Gradle support
+- minor bug fixes
+
 ## Version 1.2.0 ##
 - Added support for Google Play Advertising Identifier
 - added static App and Network label segments

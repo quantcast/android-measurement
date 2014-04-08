@@ -48,7 +48,7 @@ class QCDataManager {
 
     void postEvent(QCEvent event, QCPolicy policy) {
         //if we are blacked out then we won't save anything
-        if (policy.isBlackedOut()) return;
+        if (policy != null && policy.isBlackedOut()) return;
 
         boolean forceUpload = event.shouldForceUpload();
         int written = 0;

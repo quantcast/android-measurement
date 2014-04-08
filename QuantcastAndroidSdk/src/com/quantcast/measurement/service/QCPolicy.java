@@ -18,6 +18,7 @@ import android.telephony.TelephonyManager;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreProtocolPNames;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -149,6 +150,8 @@ class QCPolicy {
         if (!loadedPolicy) {
             String jsonString = null;
             DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
+            defaultHttpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT,
+                    System.getProperty("http.agent"));
             InputStream inputStream = null;
             try {
                 HttpGet method = new HttpGet(m_policyURL);

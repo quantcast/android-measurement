@@ -18,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
@@ -60,6 +61,8 @@ class QCDataUploader {
         int code;
         String url = QCUtility.addScheme(UPLOAD_URL_WITHOUT_SCHEME);
         final DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
+        defaultHttpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT,
+                System.getProperty("http.agent"));
         final BasicHttpContext localContext = new BasicHttpContext();
 
         try {

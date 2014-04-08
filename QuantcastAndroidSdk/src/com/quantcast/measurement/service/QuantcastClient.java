@@ -35,7 +35,7 @@ public class QuantcastClient {
      * @param apiKey  The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId  (Optional) A consistent identifier for the current user.
      *                Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @param labels  (Optional) A label is any arbitrary string that you want to be associated with this event, and will create a
      *                second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
      *                For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
@@ -91,7 +91,7 @@ public class QuantcastClient {
      *
      * @param userId A consistent identifier for the current user.
      *               Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *               Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *               Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      */
     public static String recordUserIdentifier(String userId) {
         return recordUserIdentifier(userId, (String)null);
@@ -167,7 +167,7 @@ public class QuantcastClient {
     }
 
     /**
-     * Show the About Quantcast Screen via {@link Activity#startActivity(Intent)}.
+     * Show the About Quantcast Screen.
      *
      * @param activity The activity to create the About Quantcast Screen Activity. This activity will be returned to when the user is finished.
      */
@@ -208,10 +208,22 @@ public class QuantcastClient {
         return QCOptOutUtility.isOptedOut(context);
     }
 
+    /**
+     * Can be called to set the opt-out status of the Quantcast Service.
+     * If collection is not enabled the user has opted-out.
+     *
+     * @param optedOut true if the user is opted out, otherwise false.
+     */
     public static void setCollectionEnabled(boolean optedOut){
         QCMeasurement.INSTANCE.setOptOut(optedOut);
     }
 
+    /**
+     * Call this to show the Quantcast Privacy Policy.   This should be used if the application is manually setting the opt out status instead
+     * of using the default {@link #showAboutQuantcastScreen(android.app.Activity)}
+     *
+     * @param activity The activity to create the Quantcast Privacy Policy Activity.
+     */
     public static void showQuantcastPrivacyPolicy(Activity activity){
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.quantcast.com/privacy/"));
         activity.startActivity(browserIntent);
@@ -296,7 +308,7 @@ public class QuantcastClient {
      * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId   A consistent identifier for the current user.
      *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
      */
     @Deprecated
@@ -311,7 +323,7 @@ public class QuantcastClient {
      * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId   A consistent identifier for the current user.
      *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @param label    A label for the event.
      * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
      */
@@ -327,7 +339,7 @@ public class QuantcastClient {
      * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
      * @param userId   A consistent identifier for the current user.
      *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @param labels   An array of labels for the event.
      * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
      */

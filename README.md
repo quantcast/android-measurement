@@ -12,9 +12,19 @@ If you have any implementation questions, please email mobilesupport@quantcast.c
 Integrating Quantcast Measure for Mobile Apps
 ---------------------------------------------
 
+### Integrate via Gradle ###
+
+The Quantcast SDK for Android is now available via the [Maven Central Repository](http://search.maven.org/#artifactdetails%7Ccom.quantcast.android.measurement%7CQuantcastAndroidSdk%7C1.2.1%7Caar).  If your project supports the new Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
+
+```
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.1'
+```
+
+Once completed continue to the section [SDK Integration](#sdk-integration).
+
 ### Download the SDK ###
 
-There are two ways to get the SDK.  You can download it directly from [the Quantcast website] (https://www.quantcast.com/user/quantcast-app-measurement-sdk.zip "Quantcast Measure for Apps SDK"), or you can use GitHub.  If you download the file from our site, unzip the file before continuing to the section [Set Up Your Xcode Project] (#set-up-your-xcode-project).
+There are two ways to get the SDK.  You can download it directly from [the Quantcast website](https://www.quantcast.com/user/quantcast-app-measurement-sdk.zip "Quantcast Measure for Apps SDK"), or you can use GitHub.  If you download the file from our site, unzip the file before continuing to the section [Integrate via External JAR](#integrate-via-external-jar).
 
 #### (optional) Getting the Quantcast SDK from GitHub ####
 
@@ -75,7 +85,7 @@ Note: for the `android update project` command described in the guide be sure to
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     ```
     
-    Optionally, adding WAKE_LOCK permissions will insure that analytic data will have time to be sent to the server no matter the device.  The SDK will only takes a lock if needed and will immediately release the lock if not in use in order to insure no unnecessary battery drain.  
+    Optionally, adding WAKE_LOCK permissions will ensure that analytic data will have time to be sent to the server no matter the device.  The SDK will only takes a lock if needed and will immediately release the lock if not in use in order to ensure no unnecessary battery drain.  
     ``` xml
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     ```    
@@ -196,7 +206,7 @@ QuantcastClient.logEvent(eventName);
 
 #### Geo-Location Measurement ####
 
-Change: The geo-location libray has be moved starting in version 1.1.0 to the optional-src directioy in order to remove any LocationManager code from applications that do not use it.  In order to add geolocation either add the QCLocation class into the src folder or add optional-src as another source location in your project.
+Change: The geo-location library has be moved starting in version 1.1.0 to the optional-src directory in order to remove any LocationManager code from applications that do not use it.  In order to add geolocation either add the QCLocation class into the src folder or add optional-src as another source location in your project.  This file is automatically included when using the jar or gradle integration methods.
 
 To get geo-location aware reporting, turn on geo-tracking in the `onStart()` method of every `Activity` in your project before you call `activityStart()` with the following:
 
@@ -277,10 +287,10 @@ Note that using secure data uploads causes your app to use encryption technology
 
 ### Trouble Shooting ###
 
-**Little or No App Traffic Showing Up In App's Profile On Quantcast.com**<br>
+**Little or No App Traffic Showing Up In App's Profile On Quantcast.com**
 Quantcast updates its website with your app's latest audience measurement data daily. If even after 1 day no data is showing up in your app's profile on quantcast.com, please check the following:
 * The Quantcast SDK does most of its data uploading when your app is transitioned to the background. If during your development and testing workflow in Xcode you regularly end a test run of your app by pressing "stop" or closing the emulator, your app has not necessarily had a chance to upload usage data. To ensure your app gets a chance to upload usage data to Quantcast while you are testing, be sure to click the Home or Back button on the device being tested in order to put your app into the background and thus trigger a usage data upload to Quantcast.
-* Still having weird data issues, make sure that you have both the 'activityStart' and 'activityStop' in every one of your application's Activities (not needed in Fragments).  These calls help the SDK keep track of the lifecyle of the entire application.
+* Still having weird data issues, make sure that you have both the 'activityStart' and 'activityStop' in every one of your application's Activities (not needed in Fragments).  These calls help the SDK keep track of the lifecycle of the entire application.
 * If you encounter trouble with your build, please review the documentation for the project setup and SDK integration.  The most common errors involve missing one of the steps outlined. 
 If you have are still having trouble, please email mobilesupport@quantcast.com. 
 
