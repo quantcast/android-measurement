@@ -97,13 +97,20 @@ Note: for the `android update project` command described in the guide be sure to
             </intent-filter>
         </receiver>
     ```
+
+2.  Setup [Android Advertising ID](https://developer.android.com/google/play-services/id.html) by including the Google Play Services 4.0+ into your project and add the following line to your project's `AndroidManifest.xml` as a child of the `<application>` tag:
+    ```xml
+    <meta-data android:name="com.google.android.gms.version"
+        android:value="@integer/google_play_services_version" />
+    ```
+    For additional information please see the [More About Android Advertising ID](#more-about-android-advertising-id) section.
     
-2.	Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
+3.	Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
 
 	``` java
 	import com.quantcast.measurement.service.QuantcastClient;
 	```
-3.	In the `onStart()` method of **_every_** `Activity` in your project, place the following to initialize the measurement service:
+4.	In the `onStart()` method of **_every_** `Activity` in your project, place the following to initialize the measurement service:
 
 	``` java
 	QuantcastClient.activityStart(this, <*Insert your API Key Here*>, userIdentifier, segments);
@@ -120,8 +127,8 @@ Note: for the `android update project` command described in the guide be sure to
 	QuantcastClient.activityStop();
 	```
 
-#### Using Android Advertising ID ####
-[Android advertising ID](https://developer.android.com/google/play-services/id.html) is a user specific, unique, anonymous identifier that was recently released as a new Google service.  Because it enables greater user privacy, we strongly recommend that it be used whenever available.  Please follow the [Google Play Setup Instructions](https://developer.android.com/google/play-services/setup.html) to link to Google Play and enable the Quantcast SDK to use the advertising ID.   On devices that support the advertising ID, the Quantcast SDK will no longer collect the Android device ID.    
+#### (optional) More About Android Advertising ID ####
+[Android advertising ID](https://developer.android.com/google/play-services/id.html) is a user specific, unique, anonymous identifier that was recently released in October 2013 as a new Google service.  Because it enables greater user privacy, Quantcast strongly recommend that it be used whenever available. Please follow the [Google Play Setup Instructions](https://developer.android.com/google/play-services/setup.html) to link to Google Play and enable the Quantcast SDK to use the advertising ID.   On devices that support the advertising ID, the Quantcast SDK will no longer collect the Android device ID.    
 
 
 #### (optional) Understanding the API Key ####

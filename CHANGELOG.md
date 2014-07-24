@@ -1,5 +1,10 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.2 ##
+- Update documentation for Google's Advertising ID
+- fixes #5 - Exception handled
+- minor bug fixes 
+
 ## Version 1.2.1 ##
 - Updated documentation for Gradle support
 - minor bug fixes

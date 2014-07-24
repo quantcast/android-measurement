@@ -20,6 +20,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Looper;
 
 import org.json.JSONArray;
@@ -46,12 +47,13 @@ public enum QCLocation implements QCNotificationListener{
     static final String QC_COUNTRY_KEY = "c";
     static final String QC_STATE_KEY = "st";
     static final String QC_CITY_KEY = "l";
+    static final String QC_POSTALCODE_KEY = "pc";
 
     private LocationManager _locManager;
 
     private boolean _locationEnabled;
     private String _myProvider;
-    private AsyncTask _geoTask;
+    private AsyncTask<Double, Void, MeasurementLocation> _geoTask;
     private Geocoder _geocoder;
 
     public static void setEnableLocationGathering(boolean enableLocationGathering) {
@@ -188,9 +190,8 @@ public enum QCLocation implements QCNotificationListener{
     }
 
     private void sendLocation(Location location) {
-        Double lat = location.getLatitude();
-        Double longTemp = location.getLongitude();
-
+        final Double lat = location.getLatitude();
+        final Double longTemp = location.getLongitude();
         _geoTask = new AsyncTask<Double, Void, MeasurementLocation>() {
             @Override
             protected MeasurementLocation doInBackground(Double... params) {
@@ -203,7 +204,7 @@ public enum QCLocation implements QCNotificationListener{
                     List<Address> addresses = _geocoder.getFromLocation(latitude, longitude, 1);
                     if (addresses != null && addresses.size() > 0) {
                         Address address = addresses.get(0);
-                        retval = new MeasurementLocation(address.getCountryCode(), address.getAdminArea(), address.getLocality());
+                        retval = new MeasurementLocation(address.getCountryCode(), address.getAdminArea(), address.getLocality(), address.getPostalCode());
                     } else {
                         QCLog.i(TAG, "Geocoder reverse lookup failed.");
                         retval = this.fallbackGeoLocate(latitude, longitude);
@@ -243,10 +244,25 @@ public enum QCLocation implements QCNotificationListener{
                     if(address.getLocality() != null){
                         params.put(QC_CITY_KEY, address.getLocality());
                     }
+                    if(address.getPostalCode() != null){
+                        params.put(QC_POSTALCODE_KEY, address.getPostalCode());
+                    }
                     QCMeasurement.INSTANCE.logOptionalEvent(params, null, null);
                 }
             }
-        }.execute(lat, longTemp);
+        };
+
+        //Async execute needs to be on main thread
+        if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
+            _geoTask.execute(lat, longTemp);
+        } else {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {
+                    _geoTask.execute(lat, longTemp);
+                }
+            });
+        }
     }
 
 
@@ -280,6 +296,7 @@ public enum QCLocation implements QCNotificationListener{
     private static final String SHORT_NAME = "short_name";
     private static final String STATE = "administrative_area_level_1";
     private static final String COUNTRY = "country";
+    private static final String POSTAL_CODE = "postal_code";
     private static final String TYPES = "types";
 
     private MeasurementLocation lookup(double lat, double lng) {
@@ -321,7 +338,7 @@ public enum QCLocation implements QCNotificationListener{
                 for (int i = 0; i < resultsArray.length(); i++) {
                     addressComponents = resultsArray.getJSONObject(i).optJSONArray(ADDRESS);
                     if (addressComponents != null) {
-                        String country = "", locality = "", state = "";
+                        String country = "", locality = "", state = "", postalCode = "";
                         for (int j = 0; j < addressComponents.length(); j++) {
                             JSONObject obj = addressComponents.getJSONObject(j);
                             JSONArray types = obj.optJSONArray(TYPES);
@@ -332,9 +349,11 @@ public enum QCLocation implements QCNotificationListener{
                                     state = obj.getString(SHORT_NAME);
                                 if (containsString(types, COUNTRY))
                                     country = obj.getString(SHORT_NAME);
+                                if (containsString(types, POSTAL_CODE))
+                                    postalCode = obj.getString(SHORT_NAME);
                             }
                         }
-                        return new MeasurementLocation(country, state, locality);
+                        return new MeasurementLocation(country, state, locality, postalCode);
                     }
                 }
             }
@@ -357,11 +376,13 @@ public enum QCLocation implements QCNotificationListener{
         private final String country;
         private final String state;
         private final String locality;
+        private final String postalCode;
 
-        public MeasurementLocation(String country, String state, String locality) {
+        public MeasurementLocation(String country, String state, String locality, String postalCode) {
             this.country = country;
             this.state = state;
             this.locality = locality;
+            this.postalCode = postalCode;
         }
 
         public String getCountry() {
@@ -374,6 +395,9 @@ public enum QCLocation implements QCNotificationListener{
 
         public String getLocality() {
             return locality;
+        }
+        public String getPostalCode() {
+            return postalCode;
         }
     }
 

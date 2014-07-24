@@ -351,7 +351,7 @@ enum QCMeasurement implements QCNotificationListener {
                     fis = context.openFileInput(QC_SESSION_FILE);
                     int length = context.openFileInput(QC_SESSION_FILE).read(buffer);
                     m_sessionId = new String(buffer, 0, length);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     QCLog.e(TAG, "Error reading session file ", e);
                     logSDKError("session-read-failure", e.toString(), null);
                     //last resort create a new one
@@ -463,7 +463,7 @@ enum QCMeasurement implements QCNotificationListener {
     private boolean hasAdvertisingId(){
         boolean exists = true;
         try {
-            Class.forName( "com.google.android.gms.ads.identifier.AdvertisingIdClient.Info" );
+            Class.forName( "com.google.android.gms.ads.identifier.AdvertisingIdClient" );
         } catch( ClassNotFoundException e ) {
             exists = false;
             QCLog.i(TAG, "Could not find advertising ID class.");
@@ -492,10 +492,11 @@ enum QCMeasurement implements QCNotificationListener {
             } catch (Throwable t) {
                 //whatever else could happen
                 m_deviceId = getAndroidId(context);
-                QCLog.w(TAG, "Exception thrown while getting advertising id, reverting to device Id", t);
+                QCLog.e(TAG, "Exception thrown while getting Advertising Id, reverting to device Id.  Please make sure the Play Services 4.0+ library is linked properly and added to the application's manifest.", t);
             }
         }else{
             m_deviceId = getAndroidId(context);
+            QCLog.e(TAG, "Quantcast strongly recommends using the Google Advertising Identifier to ensure user privacy.  Please link to the Play Services 4.0+ library and add it to the application's manifest. ");
         }
         return adPrefHasChanged;
     }
@@ -549,6 +550,8 @@ enum QCMeasurement implements QCNotificationListener {
 
         if (m_context != null) {
             m_context.deleteDatabase(QCDatabaseDAO.NAME);
+            File session = m_context.getFileStreamPath(QC_SESSION_FILE);
+            if (session.exists()) { session.delete(); }
         }
         m_numActiveContext = 0;
         m_sessionId = null;

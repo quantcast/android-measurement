@@ -303,7 +303,6 @@ class QCEvent {
 
     static QCEvent logSDKError(String sessionId, String errorType, String errorDesc, String errorParam) {
         QCEvent e = new QCEvent(sessionId);
-        e.setForceUpload(true);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_SDKERROR);
         e.addParameter(QC_ERRORTYPE_KEY, errorType);
         if (errorDesc != null) {
