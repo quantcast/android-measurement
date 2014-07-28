@@ -34,6 +34,8 @@ class QCDataUploader {
 
     static final String QC_UPLOAD_ID_KEY = "uplid";
     static final String QC_QCV_KEY = "qcv";
+    static final String QC_SDK_KEY = "apikey";
+    static final String QC_PCODE_KEY = "pcode";
     static final String QC_EVENTS_KEY = "events";
 
     private static final String UPLOAD_URL_WITHOUT_SCHEME = "m.quantcount.com/mobile";
@@ -48,6 +50,8 @@ class QCDataUploader {
         try {
             upload.put(QC_UPLOAD_ID_KEY, uploadId);
             upload.put(QC_QCV_KEY, QCUtility.API_VERSION);
+            upload.put(QC_SDK_KEY, QCMeasurement.INSTANCE.getApiKey());
+            upload.put(QC_PCODE_KEY, QCMeasurement.INSTANCE.getNetworkCode());
             JSONArray event = new JSONArray();
             for (QCEvent e : events) {
                 event.put(new JSONObject(e.getParameters()));

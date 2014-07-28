@@ -295,8 +295,12 @@ enum QCMeasurement implements QCNotificationListener {
         m_netLabels = labels;
     }
 
-    public String getApiKey() {
+    String getApiKey() {
         return m_apiKey;
+    }
+
+    String getNetworkCode() {
+        return m_networkCode;
     }
 
     final boolean usesSecureConnection() {
@@ -516,10 +520,10 @@ enum QCMeasurement implements QCNotificationListener {
         if (notificationName.equals(QCOptOutUtility.QC_NOTIF_OPT_OUT_CHANGED)) {
             m_optedOut = (Boolean) o;
             //opted back in we need to set everything up
-            if (!m_optedOut) {
+            if (!m_optedOut && (m_apiKey != null || m_networkCode != null)) {
                 m_policy.updatePolicy(m_context);
                 logBeginSessionEvent(QCEvent.QC_BEGIN_LAUNCH_REASON, new String[]{"_OPT-IN"}, null);
-            } else {
+            } else if (m_optedOut && isMeasurementActive()) {
                 QCUtility.dumpAppInstallID(m_context);
                 m_context.deleteDatabase(QCDatabaseDAO.NAME);
             }

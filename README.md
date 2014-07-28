@@ -103,7 +103,7 @@ Note: for the `android update project` command described in the guide be sure to
     <meta-data android:name="com.google.android.gms.version"
         android:value="@integer/google_play_services_version" />
     ```
-    For additional information please see the [More About Android Advertising ID](#more-about-android-advertising-id) section.
+    For additional information please see the [More About Android Advertising ID](#optional-more-about-android-advertising-id) section.
     
 3.	Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
 

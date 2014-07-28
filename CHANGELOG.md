@@ -1,5 +1,8 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.3 ##
+- Fix bug in opt out called before start
+
 ## Version 1.2.2 ##
 - Update documentation for Google's Advertising ID
 - fixes #5 - Exception handled
