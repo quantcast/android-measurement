@@ -72,7 +72,7 @@ class QCDataUploader {
         try {
             HttpPost post = new HttpPost(url);
             post.setHeader("Content-Type", "application/json");
-            StringEntity se = new StringEntity(upload.toString(), HTTP.ASCII);
+            StringEntity se = new StringEntity(upload.toString(), HTTP.UTF_8);
             post.setEntity(se);
 
             HttpParams params = new BasicHttpParams();
