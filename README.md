@@ -179,7 +179,7 @@ Note: when a user opts out of Quantcast Measure, the Quantcast Android SDK immed
 ### Optional Code Integrations ###
 
 #### Audience Labels ####
-Use labels to create Audience Segments, or groups of users that share a common property or attribute.  For instance, you can create an audience segment of users who purchase in your app.  For each audience segment you create, Quantcast will track membership of the segment over time, and generate an audience report that includes their demographics.  If you have implemented the same audience segments on your website(s), you will see a combined view of your web and app audiences for each audience segment. Learn more about how to use audience segments, including how to create segment hierarchies using the dot notation, here: [https://www.quantcast.com/help/showcase-your-audience-segments/] (https://www.quantcast.com/help/showcase-your-audience-segments/). 
+Use labels to create Audience Segments, or groups of users that share a common property or attribute.  For instance, you can create an audience segment of users who purchase in your app.  For each audience segment you create, Quantcast will track membership of the segment over time, and generate an audience report that includes their demographics.  If you have implemented the same audience segments on your website(s), you will see a combined view of your web and app audiences for each audience segment. Learn more about how to use audience segments, including how to create segment hierarchies using the dot notation, here: [https://www.quantcast.com/help/showcase-your-audience-segments/](https://www.quantcast.com/help/showcase-your-audience-segments/). 
 
 There are two ways to assign labels.  The first is via the `appLabels` setter.  Use setAppLabels to record labels related to user properties.  For example, to assign two labels, “purchaser.ebook” and “sharer.onFB”, you could do this:
 
@@ -259,6 +259,18 @@ Quantcast Measure provides measurement features specific to digital magazines an
 
 This feature should only be used by app networks, most notably app platforms, app development shops, and companies with a large number of branded apps where they want to maintain the app's brand when quantifying but still have the app traffic attributed to a parent network. Entities quantifying a single app or a number of apps under the same network should not use this feature.  The Networks extension adds the ability to identify a parent network, referred to as an "attributed network", for each app in addition to or instead of the app's API Key. For more information, please refer to the documentation in the source file which can be found in the SDK source folder at optional-src/QCNetworkMeasurement.java.
 
+#### Measuring Directly-Served Ad Campaigns ####
+For apps that serve advertising and can access advertiser and campaign identifiers from their ad serving system, Quantcast can measure the audience exposed to these campaigns. If you want to additionally log the ad displays that occur within your app and have audience measurement against the exposed audience, first you must first add the optional source found in
+`optional-src/QCAdvertising.java`.
+Then add the log ad impression methods when advertisements are shown or refreshed:
+
+```java
+QCAdvertising.logAdImpression(inCampaignOrNull, inMediaOrNull, inPlacementOrNull, appLabelsorNull);
+```
+
+Where inCampaignOrNull is a String of the campaign identifier being displayed for the ad impression, inMediaOrNull is an String of the ad creative identifier being displayed, and inPlacementOrNull is a String of the placement identifier for the location. Note that the Campaign, Media and Placement strings are all optional, and also that any periods in their name will be treated like a label period, indicating the level of hierarchy.
+
+You may also pass a dynamic audience label here.  In this case, the label passed in the app labels argument will place the device user who saw the ad impression into the indicate audience segment. You might use this the ad impression label to categorize the type of ad product being displayed so that you can get aggregate reports on audience exposure. See [Audience Labels](#audience-labels) section section above for more information on Audience Segments.
 
 ### SDK Customization ###
 
