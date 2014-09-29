@@ -353,7 +353,7 @@ enum QCMeasurement implements QCNotificationListener {
                 try {
                     byte buffer[] = new byte[256];
                     fis = context.openFileInput(QC_SESSION_FILE);
-                    int length = context.openFileInput(QC_SESSION_FILE).read(buffer);
+                    int length = fis.read(buffer);
                     m_sessionId = new String(buffer, 0, length);
                 } catch (Exception e) {
                     QCLog.e(TAG, "Error reading session file ", e);
