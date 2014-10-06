@@ -35,8 +35,8 @@ enum QCMeasurement implements QCNotificationListener {
     private static final QCLog.Tag TAG = new QCLog.Tag(QCMeasurement.class);
     static final long DEFAULT_SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
-    public static final String QC_NOTIF_APP_START = "QC_START";
-    public static final String QC_NOTIF_APP_STOP = "QC_STOP";
+    static final String QC_NOTIF_APP_START = "QC_START";
+    static final String QC_NOTIF_APP_STOP = "QC_STOP";
 
     private String[] m_appLabels;
     private String[] m_netLabels;
@@ -106,6 +106,11 @@ enum QCMeasurement implements QCNotificationListener {
                     }
 
                     boolean adPrefChanged = checkAdvertisingId(m_context);
+                    boolean userIDChanged = false;
+                    if (hashedId != null) {
+                        userIDChanged = userIdentifierHasChanged(hashedId);
+                        m_userId = hashedId;
+                    }
 
                     //check if it is the very first time through
                     if (!isMeasurementActive()) {
@@ -121,13 +126,8 @@ enum QCMeasurement implements QCNotificationListener {
                             m_apiKey = apiKey;
                             m_networkCode = networkCode;
 
-                            if (hashedId != null) {
-                                m_userId = hashedId;
-                            }
-
                             m_manager = new QCDataManager(m_context);
                             m_manager.setUploadCount(m_uploadCount);
-
                             m_policy = QCPolicy.getQuantcastPolicy(m_context, m_apiKey, m_networkCode, m_context.getPackageName(), isDirectedAtKids);
 
                             boolean newSession = checkSessionId(m_context);
@@ -152,8 +152,13 @@ enum QCMeasurement implements QCNotificationListener {
                         } else if (newSession) {
                             QCLog.i(TAG, "Past session timeout.  Starting new session.");
                             logBeginSessionEvent(QCEvent.QC_BEGIN_RESUME_REASON, appLabelsOrNull, networkLabels);
+                        } else if (userIDChanged) {
+                            logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabelsOrNull, networkLabels);
                         }
                     }
+                } else if(hashedId != null && userIdentifierHasChanged(hashedId)){
+                    m_userId = hashedId;
+                    logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabelsOrNull, networkLabels);
                 }
                 m_numActiveContext++;
             }
@@ -230,6 +235,10 @@ enum QCMeasurement implements QCNotificationListener {
         return m_sessionId != null;
     }
 
+    final boolean userIdentifierHasChanged(String userId){
+        return  ((m_userId != null && userId == null) || (userId != null && !userId.equals(m_userId)));
+    }
+
     final String recordUserIdentifier(String userId, String[] labels) {
         return recordUserIdentifier(userId, labels, null);
     }
@@ -244,12 +253,9 @@ enum QCMeasurement implements QCNotificationListener {
                 //if not active just save it and send it on start
                 if (!isMeasurementActive()) {
                     m_userId = hashedId;
-                } else {
-                    String ogUserId = m_userId;
+                } else if (userIdentifierHasChanged(hashedId)){
                     m_userId = hashedId;
-                    if ((m_userId == null && ogUserId != null) || (m_userId != null && !m_userId.equals(ogUserId))) {
-                        logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabels, networkLabels);
-                    }
+                    logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabels, networkLabels);
                 }
             }
         });
@@ -303,6 +309,13 @@ enum QCMeasurement implements QCNotificationListener {
         return m_networkCode;
     }
 
+    String getDeviceId() {
+        if(m_policy != null && m_policy.policyIsLoaded() && !m_policy.isBlacklisted(QCEvent.QC_DEVICEID_KEY)) {
+            return m_deviceId;
+        }
+        return null;
+    }
+
     final boolean usesSecureConnection() {
         return m_usesSecureConnection;
     }
@@ -353,7 +366,7 @@ enum QCMeasurement implements QCNotificationListener {
                 try {
                     byte buffer[] = new byte[256];
                     fis = context.openFileInput(QC_SESSION_FILE);
-                    int length = context.openFileInput(QC_SESSION_FILE).read(buffer);
+                    int length = fis.read(buffer);
                     m_sessionId = new String(buffer, 0, length);
                 } catch (Exception e) {
                     QCLog.e(TAG, "Error reading session file ", e);
@@ -470,7 +483,7 @@ enum QCMeasurement implements QCNotificationListener {
             Class.forName( "com.google.android.gms.ads.identifier.AdvertisingIdClient" );
         } catch( ClassNotFoundException e ) {
             exists = false;
-            QCLog.i(TAG, "Could not find advertising ID class.");
+            QCLog.i(TAG, "Could not find advertising ID.  Please link with Google Play Service 4.0.30 or greater.");
         }
         return exists;
     }
@@ -562,6 +575,7 @@ enum QCMeasurement implements QCNotificationListener {
         m_manager = null;
         m_policy = null;
         m_context = null;
+        m_userId = null;
     }
 
     final QCDataManager getManager() {
