@@ -254,12 +254,16 @@ public enum QCLocation implements QCNotificationListener{
 
         //Async execute needs to be on main thread
         if (Looper.getMainLooper().getThread() == Thread.currentThread()) {
-            _geoTask.execute(lat, longTemp);
+            if (_geoTask != null && _geoTask.getStatus() == AsyncTask.Status.PENDING) {
+                _geoTask.execute(lat, longTemp);
+            }
         } else {
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {
-                    _geoTask.execute(lat, longTemp);
+                    if (_geoTask != null && _geoTask.getStatus() == AsyncTask.Status.PENDING) {
+                        _geoTask.execute(lat, longTemp);
+                    }
                 }
             });
         }

@@ -1,5 +1,13 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.5 ##
+- Fixes #8 Fixes race condition in QCLocation
+- Fixes #9 Remove BuildConfig.Debug from library file
+
+## Version 1.2.4 ##
+- Fixes #7 fileInputStream not closed properly
+- small code refactor
+
 ## Version 1.2.3 ##
 - Fix bug in opt out called before start
 
