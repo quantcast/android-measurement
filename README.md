@@ -17,7 +17,7 @@ Integrating Quantcast Measure for Mobile Apps
 The Quantcast SDK for Android is now available via the [Maven Central Repository](http://search.maven.org/#artifactdetails%7Ccom.quantcast.android.measurement%7CQuantcastAndroidSdk%7C1.2.1%7Caar).  If your project supports the new Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
 
 ```
-compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.3'
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.+'
 ```
 
 Once completed continue to the section [SDK Integration](#sdk-integration).
