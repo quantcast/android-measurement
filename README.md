@@ -20,6 +20,12 @@ The Quantcast SDK for Android is now available via the [Maven Central Repository
 compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.+'
 ```
 
+If your application is using the [selectively complied versions of the Google Play Services library](http://developer.android.com/google/play-services/setup.html#split), then you should use the following instead
+
+```
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk-split:1.2.+'
+```
+
 Once completed continue to the section [SDK Integration](#sdk-integration).
 
 ### Download the SDK ###
