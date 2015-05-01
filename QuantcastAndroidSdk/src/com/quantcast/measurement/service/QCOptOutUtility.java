@@ -32,7 +32,7 @@ class QCOptOutUtility {
 
     static void saveOptOutStatus(Context appContext, boolean optedOut) {
         createOptOut(appContext, optedOut);
-        askEveryone(appContext, optedOut, true);
+        //askEveryone(appContext, optedOut, true);
         QCNotificationCenter.INSTANCE.postNotification(QC_NOTIF_OPT_OUT_CHANGED, optedOut);
     }
 
@@ -47,8 +47,9 @@ class QCOptOutUtility {
             in = appContext.openFileInput(QCMEASUREMENT_OPTOUT_STRING);
             optedOut = in.read() != 0;
         } catch (FileNotFoundException e) {
-            if (shouldAsk)
-                askEveryone(appContext, false, false);
+            optedOut = false;
+            //if (shouldAsk)
+            //    askEveryone(appContext, false, false);
         } catch (IOException ignored) {
         } finally {
             try {
@@ -66,7 +67,7 @@ class QCOptOutUtility {
     static void createOptOut(Context context, boolean optedOut) {
         FileOutputStream stream = null;
         try {
-            stream = context.openFileOutput(QCMEASUREMENT_OPTOUT_STRING, Context.MODE_WORLD_WRITEABLE | Context.MODE_WORLD_READABLE);
+            stream = context.openFileOutput(QCMEASUREMENT_OPTOUT_STRING, Context.MODE_PRIVATE);
             stream.write(optedOut ? 1 : 0);
         } catch (Exception ignored) {
         } finally {
@@ -79,6 +80,10 @@ class QCOptOutUtility {
         }
     }
 
+
+    /*We no longer want to leave our sandbox to see if a user is opted out elsewhere.
+       1) it doesnt work very well anymore on newer versions
+       2) it is pretty intrusive and we don't want to cause any security holes.
     static boolean isQuantified(Context appContext) {
         File quantified = appContext.getFileStreamPath(QCMEASUREMENT_OPTOUT_STRING);
         return quantified != null && quantified.exists();
@@ -111,4 +116,5 @@ class QCOptOutUtility {
             createOptOut(context, status);
         }
     }
+    */
 }

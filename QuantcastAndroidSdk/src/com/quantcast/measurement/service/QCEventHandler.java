@@ -58,6 +58,7 @@ class QCEventHandler extends HandlerThread {
                 }
             }
         }
+        QCLog.i(TAG, "Posting event from queue");
         boolean success = m_Handler.post(new CatchAllRunnable(r));
         if (m_wakelock != null && success) {
             m_wakelock.acquire();

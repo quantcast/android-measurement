@@ -16,8 +16,6 @@ import android.provider.Settings;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
-
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -62,7 +60,7 @@ enum QCMeasurement implements QCNotificationListener {
     private final QCEventHandler m_eventHandler;
 
 
-    private QCMeasurement() {
+    QCMeasurement() {
         m_eventHandler = new QCEventHandler();
         m_eventHandler.start();
         QCNotificationCenter.INSTANCE.addListener(QCPolicy.QC_NOTIF_POLICY_UPDATE, this);
@@ -114,7 +112,7 @@ enum QCMeasurement implements QCNotificationListener {
 
                     //check if it is the very first time through
                     if (!isMeasurementActive()) {
-                        QCLog.i(TAG, "First start of Quantcast");
+                        QCLog.i(TAG, "First start of Quantcast " + m_optedOut);
                         //read api key from manifest if there
                         String key = apiKey;
                         if (key == null) {
@@ -156,7 +154,7 @@ enum QCMeasurement implements QCNotificationListener {
                             logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabelsOrNull, networkLabels);
                         }
                     }
-                } else if(hashedId != null && userIdentifierHasChanged(hashedId)){
+                } else if (hashedId != null && userIdentifierHasChanged(hashedId)) {
                     m_userId = hashedId;
                     logBeginSessionEvent(QCEvent.QC_BEGIN_USERHASH_REASON, appLabelsOrNull, networkLabels);
                 }
@@ -209,13 +207,15 @@ enum QCMeasurement implements QCNotificationListener {
     }
 
     final void stop(final String[] appLabels, final String[] networkLabels) {
+        QCLog.i(TAG, "Stoping check opt out " + m_optedOut);
         if (m_optedOut) return;
 
         m_eventHandler.post(new Runnable() {
             @Override
             public void run() {
+                m_numActiveContext = Math.max(0, m_numActiveContext - 1);
+                QCLog.i(TAG, "Activity stopped, count: " + m_numActiveContext);
                 if (isMeasurementActive()) {
-                    m_numActiveContext = Math.max(0, m_numActiveContext - 1);
                     if (m_numActiveContext == 0) {
                         QCLog.i(TAG, "Last Activity stopped, pausing");
                         updateSessionTimestamp();
@@ -424,14 +424,24 @@ enum QCMeasurement implements QCNotificationListener {
         return sessionTimeoutInMs;
     }
 
-    final void logLatency(String uploadId, long time) {
+    final void logLatency(final String uploadId, final long time) {
         if (m_optedOut || m_manager == null) return;
-        m_manager.postEvent(QCEvent.logLatency(m_context, m_sessionId, uploadId, Long.toString(time)), m_policy);
+        m_eventHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                m_manager.postEvent(QCEvent.logLatency(m_context, m_sessionId, uploadId, Long.toString(time)), m_policy);
+            }
+        });
     }
 
-    final void logSDKError(String error, String desc, String param) {
+    final void logSDKError(final String error, final String desc, final String param) {
         if (m_optedOut || m_manager == null) return;
-        m_manager.postEvent(QCEvent.logSDKError(m_sessionId, error, desc, param), m_policy);
+        m_eventHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                m_manager.postEvent(QCEvent.logSDKError(m_sessionId, error, desc, param), m_policy);
+            }
+        });
     }
 
     final Context getAppContext() {
@@ -518,11 +528,11 @@ enum QCMeasurement implements QCNotificationListener {
         return adPrefHasChanged;
     }
 
-    void setOptOut(final boolean optOut) {
+    void setOptOut(final Context c, final boolean optOut) {
         m_eventHandler.post(new Runnable() {
             @Override
             public void run() {
-                QCOptOutUtility.saveOptOutStatus(m_context, optOut);
+                QCOptOutUtility.saveOptOutStatus(m_context != null ? m_context : c, optOut);
 
             }
         });
@@ -535,7 +545,10 @@ enum QCMeasurement implements QCNotificationListener {
             //opted back in we need to set everything up
             if (!m_optedOut && (m_apiKey != null || m_networkCode != null)) {
                 m_policy.updatePolicy(m_context);
-                logBeginSessionEvent(QCEvent.QC_BEGIN_LAUNCH_REASON, new String[]{"_OPT-IN"}, null);
+                //only auto start if we have the api key
+                if(m_apiKey != null) {
+                    logBeginSessionEvent(QCEvent.QC_BEGIN_LAUNCH_REASON, new String[]{"_OPT-IN"}, null);
+                }
             } else if (m_optedOut && isMeasurementActive()) {
                 QCUtility.dumpAppInstallID(m_context);
                 m_context.deleteDatabase(QCDatabaseDAO.NAME);
@@ -545,6 +558,8 @@ enum QCMeasurement implements QCNotificationListener {
     }
 
     void setOptOutCookie(boolean add) {
+        if(m_context == null) return;
+
         CookieSyncManager.createInstance(m_context);
         CookieManager cookieManager = CookieManager.getInstance();
         Calendar cal = GregorianCalendar.getInstance();

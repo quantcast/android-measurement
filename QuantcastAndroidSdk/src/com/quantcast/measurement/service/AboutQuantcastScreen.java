@@ -115,7 +115,7 @@ public class AboutQuantcastScreen extends Activity {
         boolean allowsCollection = m_optOutCheckbox.isChecked();
         if (m_ogAllowsCollection != allowsCollection) {
             QCLog.i(TAG, "User opt out status changed to " + !allowsCollection);
-            QCMeasurement.INSTANCE.setOptOut(!allowsCollection);
+            QCMeasurement.INSTANCE.setOptOut(null, !allowsCollection);
         }
         QuantcastClient.activityStop();
     }

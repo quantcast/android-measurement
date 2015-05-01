@@ -305,13 +305,8 @@ class QCEvent {
         QCEvent e = new QCEvent(sessionId);
         e.addParameter(QC_EVENT_KEY, QC_EVENT_SDKERROR);
         e.addParameter(QC_ERRORTYPE_KEY, errorType);
-        if (errorDesc != null) {
-            e.addParameter(QC_ERRORDESC_KEY, errorDesc);
-        }
-
-        if (errorParam != null) {
-            e.addParameter(QC_ERRORPARAM_KEY, errorParam);
-        }
+        e.addParameter(QC_ERRORDESC_KEY, errorDesc);
+        e.addParameter(QC_ERRORPARAM_KEY, errorParam);
         return e;
     }
 

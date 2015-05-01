@@ -71,7 +71,7 @@ public class QuantcastClient {
      * Cleans up any connections or data being collected by Quantcast SDK.  Should be called in every Activity's onStop()
      */
     public static void activityStop() {
-        activityStop((String)null);
+        activityStop((String) null);
     }
 
     /**
@@ -198,25 +198,7 @@ public class QuantcastClient {
         }
     }
 
-    /**
-     * Can be called to check the opt-out status of the Quantcast Service.
-     * If collection is not enabled the user has opted-out.
-     *
-     * @param context Main Activity using the Quantcast Measurement API
-     */
-    public static boolean isCollectionEnabled(Context context) {
-        return QCOptOutUtility.isOptedOut(context);
-    }
 
-    /**
-     * Can be called to set the opt-out status of the Quantcast Service.
-     * If collection is not enabled the user has opted-out.
-     *
-     * @param optedOut true if the user is opted out, otherwise false.
-     */
-    public static void setCollectionEnabled(boolean optedOut){
-        QCMeasurement.INSTANCE.setOptOut(optedOut);
-    }
 
     /**
      * Call this to show the Quantcast Privacy Policy.   This should be used if the application is manually setting the opt out status instead
@@ -229,9 +211,26 @@ public class QuantcastClient {
         activity.startActivity(browserIntent);
     }
 
+    /**
+     * Can be called to check the opt-out status of the Quantcast Service.
+     * If collection is not enabled the user has opted-out.
+     *
+     * @param context Main Activity using the Quantcast Measurement API
+     */
+    public static boolean isOptedOut(Context context) {
+        return QCOptOutUtility.isOptedOut(context);
+    }
 
-
-
+    /**
+     * Can be called to set the opt-out status of the Quantcast Service.
+     * If collection is not enabled the user has opted-out.
+     *
+     * @param context Application Context using the Quantcast Measurement API
+     * @param optOut true if the user is opted out, otherwise false.
+     */
+    public static void setOptOut(Context context, boolean optOut) {
+        QCMeasurement.INSTANCE.setOptOut(context, optOut);
+    }
 
 
 
@@ -474,6 +473,30 @@ public class QuantcastClient {
          */
         public void callback(boolean collectionEnabled);
 
+    }
+
+    /**
+     * Can be called to check the opt-out status of the Quantcast Service.
+     * If collection is not enabled the user has opted-out.
+     *
+     * @param context Main Activity using the Quantcast Measurement API
+     * @deprecated Confusing boolean  use {@link #isOptedOut(android.content.Context)}  instead.
+     */
+    @Deprecated
+    public static boolean isCollectionEnabled(Context context) {
+        return QCOptOutUtility.isOptedOut(context);
+    }
+
+    /**
+     * Can be called to set the opt-out status of the Quantcast Service.
+     * If collection is not enabled the user has opted-out.
+     *
+     * @param optOut true if the user is opted out, otherwise false.
+     * @deprecated Confusing boolean  use {@link #setOptOut(android.content.Context, boolean)}  instead.
+     */
+    @Deprecated
+    public static void setCollectionEnabled(boolean optOut){
+        QCMeasurement.INSTANCE.setOptOut(null, optOut);
     }
 
     /**

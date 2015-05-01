@@ -1,5 +1,10 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.2.7 ##
+- Changed Opt Out function to be more concise.
+- No Connection errors no longer logged
+- minor bug fixes
+
 ## Version 1.2.5 ##
 - Fixes #8 Fixes race condition in QCLocation
 - Fixes #9 Remove BuildConfig.Debug from library file

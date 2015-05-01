@@ -6,15 +6,21 @@ This implementation guide provides steps for integrating the Quantcast Measure f
 * **Know Your Audience** - Quantcast uses direct measurement and machine learning to build accurate and detailed demographic profiles.
 * **Compare and Compete** - Gauge user loyalty by analyzing visit frequency, retention and upgrades over time.
 * **Attract Advertising** – Attract advertisers by showcasing your most powerful data points using a trusted source. 
+* **Improve Campaign Performance** – Increase your campaign performance by understanding characteristics of your best users and finding more people like them.  
 
 If you have any implementation questions, please email mobilesupport@quantcast.com. We're here to help.
+
+
+### Download the SDK ###
+
+There are three ways to get the SDK.  You can download it directly from [the Quantcast website](https://www.quantcast.com/user/quantcast-app-measurement-sdk.zip "Quantcast Measure for Apps SDK"), you can use GitHub, or add a dependency via Gradle.  If you download the file from our site, unzip the file before continuing to the section [Integrate via External JAR](#integrate-via-external-jar).
 
 Integrating Quantcast Measure for Mobile Apps
 ---------------------------------------------
 
 ### Integrate via Gradle ###
 
-The Quantcast SDK for Android is now available via the [Maven Central Repository](http://search.maven.org/#artifactdetails%7Ccom.quantcast.android.measurement%7CQuantcastAndroidSdk%7C1.2.1%7Caar).  If your project supports the new Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
+The Quantcast SDK for Android is now available via the JCenter.  If your project supports the Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
 
 ```
 compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.+'
@@ -26,56 +32,29 @@ If your application is using the [selectively complied versions of the Google Pl
 compile 'com.quantcast.android.measurement:QuantcastAndroidSdk-split:1.2.+'
 ```
 
-Once completed continue to the section [SDK Integration](#sdk-integration).
-
-### Download the SDK ###
-
-There are two ways to get the SDK.  You can download it directly from [the Quantcast website](https://www.quantcast.com/user/quantcast-app-measurement-sdk.zip "Quantcast Measure for Apps SDK"), or you can use GitHub.  If you download the file from our site, unzip the file before continuing to the section [Integrate via External JAR](#integrate-via-external-jar).
-
-#### (optional) Getting the Quantcast SDK from GitHub ####
-
-If you use Git for your version control, we recommend that you make the Quantcast SDK repository a submodule in your project’s Git repository. To do so, open the Terminal application in your Mac, cd into your Git repository folder, and issue the following commands:
-
-``` bash
-git submodule add https://github.com/quantcast/android-measurement.git 
-git submodule update --init 
+Please be aware that Quantcast uses an open-ended dependency, which means it will want to pull the latest version of Play Services.  If for some reason your project uses an earlier version of the library, we recommend implementing a resolution strategy.  For example, if your application needs version 7.0 then add the following to the build.gradle
 ```
-
-If you don’t want to make the Quantcast SDK repository a submodule in your repository, you can use Git to clone the Quantcast iOS SDK's Git repository and initialize all of its submodules. 
-
-``` bash
-git clone https://github.com/quantcast/android-measurement.git ./quantcast-android-measurement
+configurations.all {
+    resolutionStrategy {
+        //don't get bitten, be proactive about conflicts
+        failOnVersionConflict()
+        eachDependency { DependencyResolveDetails details ->
+            //specifying a fixed version for all libraries with 'com.google.android.gms' group
+            if (details.requested.group == 'com.google.android.gms') {
+                details.useVersion '7.0.0'
+            }
+        }
+    }
+}
 ```
+Once completed you can skip to step 3 of the section [SDK Integration](#sdk-integration).
 
 #### Integrate via External JAR ####
 
 Once you have the repository cloned, add the `QuantcastAndroidMeasurement.jar` within to your project by copying the file into your project's `libs/` directory. If you would like to keep the JAR external and are using Eclipse you can follow [this guide](http://developer.android.com/guide/faq/commontasks.html#addexternallibrary).
 
-#### Integrate via Library Project ####
-
-##### With Eclipse #####
-
-Import the `QuantcastAndroidSdk` project into your workspace with the following steps:
-
-1.	Go to **File > Import…**
-2.	Select **Android > Existing Android Code Into Workspace** and click **Next >**
-3.	For the **Root Directory** browse to `<repo cloning directory>/quantcast-android-measurement/QuantcastAndroidSdk`
-4.	Make sure Copy projects into workspace is not checked
-5.	Click **Finish**
-
-Add a reference to the `QuantcastAndroidSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-eclipse.html#ReferencingLibraryProject).
-
-##### Without Eclipse #####
-
-Setup the `QuantcastAndroidSdk` project to be buildable with the following command:
-
-``` bash
-android update lib-project -p <repo cloning directory>/quantcast-android-measurement/QuantcastAndroidSdk/
-```
-
-Add a reference to the `QuantcastAndroidSdk` library project to your project with [this guide](http://developer.android.com/tools/projects/projects-cmdline.html#ReferencingLibraryProject)
-
-Note: for the `android update project` command described in the guide be sure to make the `-library` option a relative bath to the project or else your project will not be able to build.
+#### Integrate via Source ####
+You may also just drop the source files found in `QuantcastAndroidSdk/src/` directly into your project.  This is as simple as moving the package directory into your projects `src/` folder.  Unless you are using one of our more advanced feature (GPS, Network Measurement, etc.), you can ignore `QuantcastAndroidSdk/optional-src/` 
 
 ### SDK Integration ###
 
@@ -91,10 +70,6 @@ Note: for the `android update project` command described in the guide be sure to
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     ```
     
-    Optionally, adding WAKE_LOCK permissions will ensure that analytic data will have time to be sent to the server no matter the device.  The SDK will only takes a lock if needed and will immediately release the lock if not in use in order to ensure no unnecessary battery drain.  
-    ``` xml
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    ```    
     Finally to collect referrer data from the Google Play Store add the following lines within the `<application>` tag:
     ```xml
     <receiver android:name="com.quantcast.measurement.service.QCReferrerReceiver" android:exported="true">
@@ -135,7 +110,6 @@ Note: for the `android update project` command described in the guide be sure to
 
 #### (optional) More About Android Advertising ID ####
 [Android advertising ID](https://developer.android.com/google/play-services/id.html) is a user specific, unique, anonymous identifier that was recently released in October 2013 as a new Google service.  Because it enables greater user privacy, Quantcast strongly recommend that it be used whenever available. Please follow the [Google Play Setup Instructions](https://developer.android.com/google/play-services/setup.html) to link to Google Play and enable the Quantcast SDK to use the advertising ID.   On devices that support the advertising ID, the Quantcast SDK will no longer collect the Android device ID.    
-
 
 #### (optional) Understanding the API Key ####
 The API key is used as the basic reporting entity for Quantcast Measure. The same API Key can be used across multiple apps (i.e. AppName Free / AppName Paid) and/or app platforms (i.e. iOS / Android). For all apps under each unique API Key, Quantcast will report the aggregate audience among them all, and also identify/report on the individual app versions.

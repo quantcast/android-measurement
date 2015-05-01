@@ -26,6 +26,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.UnknownHostException;
 import java.util.Collection;
 
 class QCDataUploader {
@@ -81,10 +82,14 @@ class QCDataUploader {
 
             HttpResponse response = defaultHttpClient.execute(post, localContext);
             code = response.getStatusLine().getStatusCode();
+        }catch (UnknownHostException uhe) {
+            QCLog.e(TAG, "Not connected to Internet", uhe);
+            //don't send this error because its ok if they don't have internet connection
+            return null;
         } catch (Exception e) {
             QCLog.e(TAG, "Could not upload events", e);
             QCMeasurement.INSTANCE.logSDKError("json-upload-failure", e.toString(), null);
-            code = HttpStatus.SC_REQUEST_TIMEOUT;
+            return null;
         }
 
         if (!isSuccessful(code)) {

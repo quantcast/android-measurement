@@ -29,7 +29,7 @@ class QCUtility {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCUtility.class);
 
-    public static final String API_VERSION = "1_2_5";
+    public static final String API_VERSION = "1_2_7";
 
     private static final long[] HASH_CONSTANTS = {0x811c9dc5, 0xc9dc5118};
 
@@ -120,9 +120,7 @@ class QCUtility {
             if (installId == null) {
                 installId = generateUniqueId();
                 QCLog.i(TAG, "Saving install id:" + installId + ".");
-                Editor editor = sharedPreferences.edit();
-                editor.putString(INSTALL_ID_PREF_NAME, installId);
-                editor.commit();
+                sharedPreferences.edit().putString(INSTALL_ID_PREF_NAME, installId).commit();
             }
 
             return installId;
@@ -132,9 +130,7 @@ class QCUtility {
     static void saveUserAdPref(Context context, boolean userAdPref) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
         QCLog.i(TAG, "Saving advertising preference");
-        Editor editor = sharedPreferences.edit();
-        editor.putBoolean(USER_AD_PREF_NAME, userAdPref);
-        editor.commit();
+        sharedPreferences.edit().putBoolean(USER_AD_PREF_NAME, userAdPref).commit();
     }
 
     static boolean getUserAdPref(Context context) {
@@ -144,9 +140,7 @@ class QCUtility {
 
     protected static void dumpAppInstallID(Context context) {
         SharedPreferences sharedPreferences = context.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-        Editor editor = sharedPreferences.edit();
-        editor.remove(INSTALL_ID_PREF_NAME);
-        editor.commit();
+        sharedPreferences.edit().remove(INSTALL_ID_PREF_NAME).commit();
     }
 
     protected static String addScheme(String schemelessUrl) {

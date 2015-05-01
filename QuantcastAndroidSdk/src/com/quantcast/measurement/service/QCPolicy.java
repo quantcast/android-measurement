@@ -147,6 +147,7 @@ class QCPolicy {
         if (isBlackedOut()) return;
 
         boolean loadedPolicy = checkPolicy(context, false);
+        QCLog.i(TAG, "checking load policy: " + loadedPolicy);
         if (!loadedPolicy) {
             String jsonString = null;
             DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
