@@ -11,14 +11,16 @@
  */
 package com.quantcast.measurement.service;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
 import android.util.Log;
 import android.webkit.WebView;
-
-import java.lang.reflect.Method;
 
 /**
  * Client API for Quantcast Measurement service.
@@ -26,6 +28,7 @@ import java.lang.reflect.Method;
  * This exposes only those methods that may be called by developers using the Quantcast Measurement API.
  */
 public class QuantcastClient {
+
 
 
     /**
@@ -84,6 +87,67 @@ public class QuantcastClient {
      */
     public static void activityStop(String... labels) {
         QCMeasurement.INSTANCE.stop(labels);
+    }
+
+    /**
+     * Used when initially starting the SDK in the Application file.  This only needs to be called once in the OnCreate() method of the Application
+     * When using this method, you do not ever need to call activityStart() and activityStop().  Also be sure that you declare your Application subclass in the Android manifest.
+     * The Application object and and api key are required.
+     *
+     * @param app     The Application object of your app.
+     * @param apiKey  The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
+     * @param userId  (Optional) A consistent identifier for the current user.
+     *                Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
+     *                Record a user identifier of null should be used for a log out and will remove any saved user identifier.
+     * @param labels  (Optional) A label is any arbitrary string that you want to be associated with this event, and will create a
+     *                second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
+     *                For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
+     *                and one for users who have purchased an upgrade.
+     */
+    @TargetApi(14)
+    public static void startQuantcast(Application app, final String apiKey, final String userId, final String[] labels) {
+        if (Build.VERSION.SDK_INT < 14) {
+            QCLog.Tag t = new QCLog.Tag(QuantcastClient.class);
+            QCLog.e(t, "This method requires Android API level of 14 or above. You must use activityStart instead.");
+        } else {
+            app.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
+                private boolean hasInstanceData = false;
+                @Override
+                public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+                    hasInstanceData = savedInstanceState != null;
+                }
+
+                @Override
+                public void onActivityStarted(Activity activity) {
+                    if(!hasInstanceData) {
+                        QuantcastClient.activityStart(activity, apiKey, userId, labels);
+                    }
+                }
+
+                @Override
+                public void onActivityResumed(Activity activity) {
+                }
+
+                @Override
+                public void onActivityPaused(Activity activity) {
+                }
+
+                @Override
+                public void onActivityStopped(Activity activity) {
+                    if(!activity.isChangingConfigurations()) {
+                        QuantcastClient.activityStop(labels);
+                    }
+                }
+
+                @Override
+                public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+                }
+
+                @Override
+                public void onActivityDestroyed(Activity activity) {
+                }
+            });
+        }
     }
 
     /**
@@ -230,303 +294,5 @@ public class QuantcastClient {
      */
     public static void setOptOut(Context context, boolean optOut) {
         QCMeasurement.INSTANCE.setOptOut(context, optOut);
-    }
-
-
-
-
-
-
-
-
-    /****  DEPRECATED METHODS -  added for backwards compatibility ******/
-
-
-
-    /**
-     * Use this to control whether or not the service should collect location data. You should only enabled location gathering if your app has some location-aware purpose.
-     *
-     * @param enableLocationGathering Set to true to enable location, false to disable
-     * @deprecated QCLocation is now an optional class found in the optional-src directory. Use QCLocation.setEnableLocationGathering(true)."
-     */
-    @Deprecated
-    public static void setEnableLocationGathering(boolean enableLocationGathering) {
-        QCLog.Tag t = new QCLog.Tag(QCMeasurement.class);
-        QCLog.w(t, "Location is now an optional class.  To enable use QCLocation.setEnableLocationGathering(true) instead of this method.");
-        try {
-            Class c = Class.forName("com.quantcast.measurement.service.QCLocation");
-            Method method = c.getMethod("setEnableLocationGathering", new Class[]{boolean.class});
-            method.invoke(null, enableLocationGathering);
-        } catch (Exception e) {
-            QCLog.e(t, "QCLocation class not found.  It can be found in the optional-src directory.  Please add it to the package.");
-        }
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKey(Activity activity, String apiKey) {
-        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null);
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @param label    A label for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKey(Activity activity, String apiKey, String label) {
-        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null, label);
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @param labels   An array of labels for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKey(Activity activity, String apiKey, String[] labels) {
-        beginSessionWithApiKeyAndWithUserId(activity, apiKey, null, labels);
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @param userId   A consistent identifier for the current user.
-     *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId) {
-        beginSessionWithApiKeyAndWithUserId(activity, apiKey, userId, new String[0]);
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @param userId   A consistent identifier for the current user.
-     *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
-     * @param label    A label for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId, String label) {
-        beginSessionWithApiKeyAndWithUserId(activity, apiKey, userId, new String[]{label});
-    }
-
-    /**
-     * Start a new measurement session. Should be called in the main activity's onCreate method.
-     *
-     * @param activity Main Activity using the Quantcast Measurement API
-     * @param apiKey   The Quantcast API key that activity for this app should be reported under. Obtain this key from the Quantcast website.
-     * @param userId   A consistent identifier for the current user.
-     *                 Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                 Record a user identifier of null should be used for a log out and will remove any saved user identifier.
-     * @param labels   An array of labels for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String, String, String[])} instead.
-     */
-    @Deprecated
-    public static void beginSessionWithApiKeyAndWithUserId(Activity activity, String apiKey, String userId, String[] labels) {
-        activityStart(activity, apiKey, userId, labels);
-    }
-
-    /**
-     * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
-     *
-     * @deprecated use {@link #activityStop()} instead.
-     */
-    @Deprecated
-    public static void pauseSession() {
-        pauseSession(new String[0]);
-    }
-
-    /**
-     * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
-     *
-     * @param label A label for the event.
-     * @deprecated use {@link #activityStop(String[])} instead.
-     */
-    @Deprecated
-    public static void pauseSession(String label) {
-        pauseSession(new String[]{label});
-    }
-
-    /**
-     * Logs a pause event as well as evoking some internal maintenance. This should be called in the main activity's onPause method
-     *
-     * @param labels An array of labels for the event.
-     * @deprecated use {@link #activityStop(String[])} instead.
-     */
-    @Deprecated
-    public static void pauseSession(String[] labels) {
-        activityStop(labels);
-    }
-
-    /**
-     * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
-     *
-     * @deprecated use {@link #activityStart(android.content.Context)} instead.
-     */
-    @Deprecated
-    public static void resumeSession() {
-        resumeSession(new String[0]);
-    }
-
-    /**
-     * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
-     *
-     * @param label A label for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String[])} instead.
-     */
-    @Deprecated
-    public static void resumeSession(String label) {
-        resumeSession(new String[]{label});
-    }
-
-    /**
-     * Logs a resume event as well as evoking some internal maintenance. This should be called in the main activity's onResume method
-     *
-     * @param labels An array of labels for the event.
-     * @deprecated use {@link #activityStart(android.content.Context, String[])} instead.
-     */
-    @Deprecated
-    public static void resumeSession(String[] labels) {
-        activityStart(null, labels);
-    }
-
-    /**
-     * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
-     *
-     * @deprecated use {@link #activityStop()}  instead.
-     */
-    @Deprecated
-    public static void endSession(Activity activity) {
-        endSession(activity, new String[0]);
-    }
-
-    /**
-     * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
-     *
-     * @param label A label for the event.
-     * @deprecated use {@link #activityStop(String[])}  instead.
-     */
-    @Deprecated
-    public static void endSession(Activity activity, String label) {
-        endSession(activity, new String[]{label});
-    }
-
-    /**
-     * Ends the current measurement session. This will clean up all of the services resources. This should be called in the main activity's onDestroy method.
-     *
-     * @param labels An array of labels for the event.
-     * @deprecated use {@link #activityStop(String[])}  instead.
-     */
-    @Deprecated
-    public static void endSession(Activity activity, String[] labels) {
-        activityStop(labels);
-    }
-
-    /**
-     * Can be called to check the opt-out status of the Quantcast Service.
-     * If collection is not enabled the user has opted-out.
-     * The opt-out status is not guaranteed to be available at the time of the call.
-     * Therefore it must be communicated via callback.
-     *
-     * @param context  Main Activity using the Quantcast Measurement API
-     * @param callback The action to be taken when the opt-out status is available
-     * @deprecated Callback no longer required.  use {@link #isCollectionEnabled(android.content.Context)}  instead.
-     */
-    @Deprecated
-    public static void isCollectionEnabled(Context context, final CollectionEnabledCallback callback) {
-        callback.callback(QCOptOutUtility.isOptedOut(context));
-    }
-
-    /**
-     * Helper callback class to allow for asynchronous reaction to requests for opt-out status
-     *
-     * @deprecated Callback no longer required.  use {@link #isCollectionEnabled(android.content.Context)}  instead.
-     */
-    @Deprecated
-    public static interface CollectionEnabledCallback {
-
-        /**
-         * Called when opt-out status is available
-         *
-         * @param collectionEnabled The current opt-out status. If collection is not enabled the user has opted-out.
-         */
-        public void callback(boolean collectionEnabled);
-
-    }
-
-    /**
-     * Can be called to check the opt-out status of the Quantcast Service.
-     * If collection is not enabled the user has opted-out.
-     *
-     * @param context Main Activity using the Quantcast Measurement API
-     * @deprecated Confusing boolean  use {@link #isOptedOut(android.content.Context)}  instead.
-     */
-    @Deprecated
-    public static boolean isCollectionEnabled(Context context) {
-        return QCOptOutUtility.isOptedOut(context);
-    }
-
-    /**
-     * Can be called to set the opt-out status of the Quantcast Service.
-     * If collection is not enabled the user has opted-out.
-     *
-     * @param optOut true if the user is opted out, otherwise false.
-     * @deprecated Confusing boolean  use {@link #setOptOut(android.content.Context, boolean)}  instead.
-     */
-    @Deprecated
-    public static void setCollectionEnabled(boolean optOut){
-        QCMeasurement.INSTANCE.setOptOut(null, optOut);
-    }
-
-    /**
-     * Allows you to change what logs will actually be reported by Quantcast Measurement Service classes
-     *
-     * @param logLevel The log level for Quantcast Measurement Service classes. This should be one of Log.VERBOSE, Log.DEBUG, Log.INFO, Log.WARN, Log.ERROR
-     * @deprecated For easier use logs are just on or off.  use {@link #enableLogging(boolean)}  instead.
-     */
-    @Deprecated
-    public static void setLogLevel(int logLevel) {
-        QCLog.setLogLevel(logLevel);
-    }
-
-    /**
-     * Legacy. No longer logs anything
-     *
-     * @deprecated For easier use logs are just on or off.  use {@link #enableLogging(boolean)}  instead.
-     */
-    @Deprecated
-    public static void logRefresh() {
-        // Do nothing
-    }
-
-    /**
-     * Legacy. No longer logs anything
-     *
-     * @deprecated For easier use logs are just on or off.  use {@link #enableLogging(boolean)}  instead.
-     */
-    @Deprecated
-    public static void logUpdate() {
-        // Do nothing
     }
 }

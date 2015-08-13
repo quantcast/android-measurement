@@ -86,7 +86,7 @@ You may also just drop the source files found in `QuantcastAndroidSdk/src/` dire
     ```
     For additional information please see the [More About Android Advertising ID](#optional-more-about-android-advertising-id) section.
     
-3.	Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
+3.	(Note: If you only support API Level 14 and above please see the [One-Step Application Integration](#optional-One-Step-Application-Integration) section) Import the `QuantcastClient` into **_every_** `Activity` in your project by adding the following import:
 
 	``` java
 	import com.quantcast.measurement.service.QuantcastClient;
@@ -113,6 +113,26 @@ You may also just drop the source files found in `QuantcastAndroidSdk/src/` dire
 
 #### (optional) Understanding the API Key ####
 The API key is used as the basic reporting entity for Quantcast Measure. The same API Key can be used across multiple apps (i.e. AppName Free / AppName Paid) and/or app platforms (i.e. iOS / Android). For all apps under each unique API Key, Quantcast will report the aggregate audience among them all, and also identify/report on the individual app versions.
+
+#### (optional) One-Step Application Integration ####
+Apps targeting Ice Cream Sandwich (API Level 14) and above can use a much simpler integration method by extending Android's `Application` class.  
+``` java 
+import com.quantcast.measurement.service.QuantcastClient;
+public class MyApplication extends Application {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        QuantcastClient.startQuantcast(this, <*Insert your API Key Here*>, userIdentifier, audienceSegments);
+    }
+}
+```
+With this integration you do not have to explicitly call the `activityStart` and `activityStop` methods.  You also need to be sure to register your new application class in your manifest file.  This is done by adding `android:name` to the application tag.  For example
+```xml
+<application
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:name=".MyApplication">
+```
 
 ### Compile and Test ###
 

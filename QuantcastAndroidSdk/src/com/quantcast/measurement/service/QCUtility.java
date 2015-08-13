@@ -13,7 +13,6 @@ package com.quantcast.measurement.service;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
@@ -29,7 +28,7 @@ class QCUtility {
 
     private static final QCLog.Tag TAG = new QCLog.Tag(QCUtility.class);
 
-    public static final String API_VERSION = "1_2_7";
+    public static final String API_VERSION = "1_3_0";
 
     private static final long[] HASH_CONSTANTS = {0x811c9dc5, 0xc9dc5118};
 
@@ -82,6 +81,13 @@ class QCUtility {
                 appName = context.getString(nameID);
             } catch (Resources.NotFoundException e) {
                 QCLog.i(TAG, "AppName: Resource not found for " + nameID);
+                //ok time to get a little more complicated
+                PackageManager pm = context.getPackageManager();
+                ApplicationInfo ai = null;
+                try {
+                    ai = pm.getApplicationInfo(context.getPackageName(), 0);
+                } catch (final PackageManager.NameNotFoundException ignored) { }
+                appName = (String)(ai != null ? pm.getApplicationLabel(ai) : "app");
             }
         }
         return appName;

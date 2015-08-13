@@ -1,5 +1,10 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.3.0 ##
+- Added new one-step application level tracking for apps targeting 14 and above
+- Dropped support for all deprecated methods.
+- minor bug fixes
+
 ## Version 1.2.7 ##
 - Changed Opt Out function to be more concise.
 - No Connection errors no longer logged
