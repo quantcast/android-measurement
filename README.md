@@ -23,13 +23,13 @@ Integrating Quantcast Measure for Mobile Apps
 The Quantcast SDK for Android is now available via the JCenter.  If your project supports the Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
 
 ```
-compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.2.+'
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.3.+'
 ```
 
 If your application is using the [selectively complied versions of the Google Play Services library](http://developer.android.com/google/play-services/setup.html#split), then you should use the following instead
 
 ```
-compile 'com.quantcast.android.measurement:QuantcastAndroidSdk-split:1.2.+'
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk-split:1.3.+'
 ```
 
 Please be aware that Quantcast uses an open-ended dependency, which means it will want to pull the latest version of Play Services.  If for some reason your project uses an earlier version of the library, we recommend implementing a resolution strategy.  For example, if your application needs version 7.0 then add the following to the build.gradle
