@@ -1,5 +1,8 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.3.1 ##
+- Minor update to upload packet
+
 ## Version 1.3.0 ##
 - Added new one-step application level tracking for apps targeting 14 and above
 - Dropped support for all deprecated methods.

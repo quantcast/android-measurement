@@ -309,6 +309,10 @@ enum QCMeasurement implements QCNotificationListener {
         return m_networkCode;
     }
 
+    String getPackageId(){
+        return m_context != null ? m_context.getPackageName() : null;
+    }
+
     String getDeviceId() {
         if(m_policy != null && m_policy.policyIsLoaded() && !m_policy.isBlacklisted(QCEvent.QC_DEVICEID_KEY)) {
             return m_deviceId;

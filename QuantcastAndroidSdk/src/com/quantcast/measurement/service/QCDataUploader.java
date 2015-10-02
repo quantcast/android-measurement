@@ -52,6 +52,8 @@ class QCDataUploader {
             upload.put(QCEvent.QC_APIKEY_KEY, QCMeasurement.INSTANCE.getApiKey());
             upload.put(QCEvent.QC_NETWORKCODE_KEY, QCMeasurement.INSTANCE.getNetworkCode());
             upload.put(QCEvent.QC_DEVICEID_KEY, QCMeasurement.INSTANCE.getDeviceId());
+            upload.put(QCEvent.QC_DEVICEOS_KEY, QCEvent.QC_DEVICEOS_VALUE);
+            upload.put(QCEvent.QC_PACKAGEID_KEY, QCMeasurement.INSTANCE.getPackageId());
 
             JSONArray event = new JSONArray();
             for (QCEvent e : events) {
