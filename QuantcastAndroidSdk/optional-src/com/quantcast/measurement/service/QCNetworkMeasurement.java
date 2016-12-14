@@ -1,7 +1,6 @@
 
 /**
- * Copyright 2013 Quantcast Corp.
- * <p/>
+ * Copyright 2016 Quantcast Corp.
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
@@ -41,15 +40,15 @@ import java.util.Map;
  To implement the Networks extension, you should use the methods declared under this Networks category rather than their original form equivalents
  from QuantcastMeasurement.h. The mapping for the original form methods to the Networks replacement is:
 
-    Original Form Method                                       --> Networks Extension Method
+    Original Form Method                                       -- Networks Extension Method
 
-    activityStart(Context, apiKey, userId,labels)              --> activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
-    activityStart(Context, labels)                             --> activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
-    activityStart(Context)                                     --> activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
-    activityStop(labels)                                       --> activityStop(appLabels, networkLabels)
-    activityStop()                                             --> activityStop(appLabels, networkLabels)
-    recordUserIdentifier(userId,labelsOrNull)                  --> recordUserIdentifier(userId, appLabels, networkLabels)
-    logEvent(eventName, labels)                                --> logEvent(eventName, appLabels, networkLabels)
+    activityStart(Context, apiKey, userId,labels)              -- activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
+    activityStart(Context, labels)                             -- activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
+    activityStart(Context)                                     -- activityStart(context, apiKey, networkCode, userId, appLabels, networkLabels, isDirectAtKids)
+    activityStop(labels)                                       -- activityStop(appLabels, networkLabels)
+    activityStop()                                             -- activityStop(appLabels, networkLabels)
+    recordUserIdentifier(userId,labelsOrNull)                  -- recordUserIdentifier(userId, appLabels, networkLabels)
+    logEvent(eventName, labels)                                -- logEvent(eventName, appLabels, networkLabels)
 
  All methods listed above will generate an error if you mix usage of Original Form Methods with Networks Methods.
 
@@ -80,7 +79,7 @@ public class QCNetworkMeasurement {
      *                      networkCode given then and apiKey is required, but please consider using QuantcastClient.activityStart instead.
      * @param userId        (Optional) A consistent identifier for the current user.
      *                      Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                      Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                      Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @param appLabels     (Optional) A application label is any arbitrary string that you want to be associated with this event, and will create a
      *                      second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
      *                      For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,
@@ -125,7 +124,7 @@ public class QCNetworkMeasurement {
      *
      * @param userId       A consistent identifier for the current user.
      *                     Any user identifier recorded will be save for all future session until it a new user identifier is recorded.
-     *                     Record a user identifier of {@link null} should be used for a log out and will remove any saved user identifier.
+     *                     Record a user identifier of null should be used for a log out and will remove any saved user identifier.
      * @param appLabels    (Optional) An application label is any arbitrary string that you want to be associated with this event, and will create a
      *                      second dimension in Quantcast Measurement reporting. Nominally, this is a "user class" indicator.
      *                      For example, you might use one of two labels in your app: one for user who ave not purchased an app upgrade,

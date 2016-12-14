@@ -1,5 +1,5 @@
 /**
- * © Copyright 2012-2014 Quantcast Corp.
+ * © Copyright 2016 Quantcast Corp.
  *
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
@@ -24,7 +24,6 @@ import android.webkit.WebView;
 
 /**
  * Client API for Quantcast Measurement service.
- * <p/>
  * This exposes only those methods that may be called by developers using the Quantcast Measurement API.
  */
 public class QuantcastClient {

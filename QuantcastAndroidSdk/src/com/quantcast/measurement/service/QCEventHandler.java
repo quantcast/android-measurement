@@ -19,6 +19,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.MessageQueue;
 import android.os.PowerManager;
+import android.os.Process;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -30,7 +31,7 @@ class QCEventHandler extends HandlerThread {
     private PowerManager.WakeLock m_wakelock;
 
     public QCEventHandler() {
-        super("com.quantcast.event.handler");
+        super("com.quantcast.event.handler", Process.THREAD_PRIORITY_BACKGROUND);
     }
 
     public void setContext(Context context) {
@@ -69,7 +70,8 @@ class QCEventHandler extends HandlerThread {
     @Override
     protected void onLooperPrepared() {
         super.onLooperPrepared();
-        m_Handler = new Handler();
+        m_Handler = new Handler(this.getLooper());
+
         Looper.myQueue().addIdleHandler(new MessageQueue.IdleHandler() {
             @Override
             public boolean queueIdle() {

@@ -1,5 +1,8 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.4.0 ##
+- Remove fallback to android device identifier.  If Google Play services is not linked, a null is returned.
+
 ## Version 1.3.1 ##
 - Minor update to upload packet
 

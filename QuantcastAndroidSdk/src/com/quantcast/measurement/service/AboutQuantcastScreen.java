@@ -67,7 +67,7 @@ public class AboutQuantcastScreen extends Activity {
         dialogView.addView(dialogMessage);
 
         Button proceedButton = new Button(this);
-        proceedButton.setId(600);
+        proceedButton.setTag(600);
         final Activity activity = this;
         proceedButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,7 +91,7 @@ public class AboutQuantcastScreen extends Activity {
         dialogView.addView(proceedButton);
 
         m_optOutCheckbox = new CheckBox(this);
-        m_optOutCheckbox.setId(500);
+        m_optOutCheckbox.setTag(500);
         m_optOutCheckbox.setChecked(m_ogAllowsCollection);
         m_optOutCheckbox.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         m_optOutCheckbox.setText(OPT_OUT_CHECKBOX_TEXT);

@@ -12,7 +12,6 @@
 package com.quantcast.measurement.service;
 
 import android.content.Context;
-import android.provider.Settings;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
@@ -40,6 +39,7 @@ enum QCMeasurement implements QCNotificationListener {
     private String[] m_netLabels;
 
     private boolean m_optedOut;
+    private boolean adPrefChanged = false;
 
     private QCPolicy m_policy;
     private QCDataManager m_manager;
@@ -93,6 +93,7 @@ enum QCMeasurement implements QCNotificationListener {
         m_eventHandler.setContext(m_context);
 
         final String hashedId = QCUtility.applyHash(userIdOrNull);
+        loadAdvertisingId(m_context);
         m_eventHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -103,7 +104,6 @@ enum QCMeasurement implements QCNotificationListener {
                         setOptOutCookie(true);
                     }
 
-                    boolean adPrefChanged = checkAdvertisingId(m_context);
                     boolean userIDChanged = false;
                     if (hashedId != null) {
                         userIDChanged = userIdentifierHasChanged(hashedId);
@@ -481,16 +481,6 @@ enum QCMeasurement implements QCNotificationListener {
         return currentAdPref ^ lastAdPref;
     }
 
-    final String getAndroidId(Context context) {
-        String androidId = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
-        //checks for the fake androidID returned on some Froyo devices
-        if (androidId == null || androidId.equals("9774d56d682e549c")) {
-            androidId = null;
-        }
-
-        return androidId;
-    }
-
     private boolean hasAdvertisingId(){
         boolean exists = true;
         try {
@@ -502,34 +492,38 @@ enum QCMeasurement implements QCNotificationListener {
         return exists;
     }
 
-    final boolean checkAdvertisingId(Context context) {
-        boolean adPrefHasChanged = false;
+    final void loadAdvertisingId(final Context context) {
         if(hasAdvertisingId()){
-            try {
-                com.google.android.gms.ads.identifier.AdvertisingIdClient.Info adInfo;
-                adInfo = com.google.android.gms.ads.identifier.AdvertisingIdClient.getAdvertisingIdInfo(context);
-                //check if they turned off advertising tracking.  If so return null
-                boolean limitedAdTracking = adInfo.isLimitAdTrackingEnabled();
-                if (hasUserAdPrefChanged(context, limitedAdTracking)) {
-                    QCUtility.dumpAppInstallID(context);
-                    adPrefHasChanged = true;
+
+         m_eventHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        com.google.android.gms.ads.identifier.AdvertisingIdClient.Info adInfo;
+                        adInfo = com.google.android.gms.ads.identifier.AdvertisingIdClient.getAdvertisingIdInfo(context);
+                        //check if they turned off advertising tracking.  If so return null
+                        boolean limitedAdTracking = adInfo.isLimitAdTrackingEnabled();
+                        if (hasUserAdPrefChanged(context, limitedAdTracking)) {
+                            QCUtility.dumpAppInstallID(context);
+                            adPrefChanged = true;
+                        }
+                        QCUtility.saveUserAdPref(context, limitedAdTracking);
+                        if (limitedAdTracking) {
+                            m_deviceId = null;
+                        } else {
+                            m_deviceId = adInfo.getId();
+                        }
+                    } catch (Throwable t) {
+                        //whatever else could happen
+                        m_deviceId = null;
+                        QCLog.e(TAG, "Exception thrown while getting Advertising Id.  Please make sure the Play Services 4.0+ library is linked properly and added to the application's manifest.", t);
+                    }
                 }
-                QCUtility.saveUserAdPref(context, limitedAdTracking);
-                if (limitedAdTracking) {
-                    m_deviceId = null;
-                } else {
-                    m_deviceId = adInfo.getId();
-                }
-            } catch (Throwable t) {
-                //whatever else could happen
-                m_deviceId = getAndroidId(context);
-                QCLog.e(TAG, "Exception thrown while getting Advertising Id, reverting to device Id.  Please make sure the Play Services 4.0+ library is linked properly and added to the application's manifest.", t);
-            }
+            });
         }else{
-            m_deviceId = getAndroidId(context);
+            m_deviceId = null;
             QCLog.e(TAG, "Quantcast strongly recommends using the Google Advertising Identifier to ensure user privacy.  Please link to the Play Services 4.0+ library and add it to the application's manifest. ");
         }
-        return adPrefHasChanged;
     }
 
     void setOptOut(final Context c, final boolean optOut) {

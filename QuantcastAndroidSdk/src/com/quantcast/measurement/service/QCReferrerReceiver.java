@@ -10,7 +10,6 @@ import android.os.Bundle;
 
 /**
  * © Copyright 2012-2014 Quantcast Corp.
- * <p/>
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at

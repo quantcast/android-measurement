@@ -5,8 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Copyright 2013 Quantcast Corp.
- * <p/>
+ * Copyright 2016 Quantcast Corp.
  * This software is licensed under the Quantcast Mobile App Measurement Terms of Service
  * https://www.quantcast.com/learning-center/quantcast-terms/mobile-app-measurement-tos
  * (the “License”). You may not use this file unless (1) you sign up for an account at
