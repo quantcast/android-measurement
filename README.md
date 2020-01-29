@@ -23,7 +23,7 @@ Integrating Quantcast Measure for Mobile Apps
 The Quantcast SDK for Android is now available via the JCenter.  If your project supports the Gradle build system, this is the simplest solution.  Just add the following line to your build.gradle file's dependencies section
 
 ```
-compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.4.+'
+compile 'com.quantcast.android.measurement:QuantcastAndroidSdk:1.5.0'
 ```
 
 Once completed you can skip to step 3 of the section [SDK Integration](#sdk-integration).
@@ -48,14 +48,16 @@ You may also just drop the source files found in `QuantcastAndroidSdk/src/` dire
     ``` xml
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     ```
-    
-    Finally to collect referrer data from the Google Play Store add the following lines within the `<application>` tag:
+
+    Within the `<application>` tag: add the following attribute:
     ```xml
-    <receiver android:name="com.quantcast.measurement.service.QCReferrerReceiver" android:exported="true">
-            <intent-filter>
-                <action android:name="com.android.vending.INSTALL_REFERRER" />
-            </intent-filter>
-        </receiver>
+        <application
+                android:usesCleartextTraffic="true">
+    ```
+
+    Finally within the `<application>` tag add:
+    ```xml
+        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
     ```
 
 2.  Setup [Android Advertising ID](https://developer.android.com/google/play-services/id.html) by including the Google Play Services 4.0+ into your project and add the following line to your project's `AndroidManifest.xml` as a child of the `<application>` tag:

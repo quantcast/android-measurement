@@ -1,5 +1,9 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.5.0 ##
+- Fix crash with DefaultHttpClient lib
+- Replace install_referrer with play install referrer
+
 ## Version 1.4.0 ##
 - Remove fallback to android device identifier.  If Google Play services is not linked, a null is returned.
 

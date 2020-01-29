@@ -44,7 +44,7 @@ class QCEventHandler extends HandlerThread {
         if (res == PackageManager.PERMISSION_GRANTED) {
             PowerManager pm = (PowerManager) context.getSystemService(
                     Context.POWER_SERVICE);
-            m_wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "com.quantcast.event.wakelock");
+            m_wakelock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "qc:com.quantcast.event.wakelock");
             m_wakelock.setReferenceCounted(false);
         }
     }
@@ -62,7 +62,7 @@ class QCEventHandler extends HandlerThread {
         QCLog.i(TAG, "Posting event from queue");
         boolean success = m_Handler.post(new CatchAllRunnable(r));
         if (m_wakelock != null && success) {
-            m_wakelock.acquire();
+            m_wakelock.acquire(30000);
         }
         return success;
     }
