@@ -74,10 +74,6 @@ class QCEvent {
     static final String QC_LATENCYVALUE_KEY = "latency-value";
     static final String QC_LATENCYID_KEY = "uplid";
 
-    static final String QC_REFERRER_KEY = "r";
-    static final String QC_REFERRERCLICKTIME_KEY = "rclicktime";
-    static final String QC_REFERRERINSTALLTIME_KEY = "rinstalltime";
-    static final String QC_REFERRERINSTANTEXP_KEY = "rinstantexplaunched";
     static final String QC_ERRORTYPE_KEY = "error-type";
     static final String QC_ERRORDESC_KEY = "error-desc";
     static final String QC_ERRORPARAM_KEY = "error-param";
@@ -109,10 +105,6 @@ class QCEvent {
         e.addParameter(QC_MEDIA_KEY, QC_MEDIA_VALUE);
         e.addParameter(QC_CONNECTION_KEY, QCReachability.networkType(context));
         e.addParameter(QC_NETWORKCODE_KEY, networkCode);
-        e.addParameter(QC_REFERRER_KEY, QCPlayReferrer.getReferrerURL());
-        e.addParameter(QC_REFERRERCLICKTIME_KEY, QCPlayReferrer.getReferrerClickTime());
-        e.addParameter(QC_REFERRERINSTALLTIME_KEY, QCPlayReferrer.getAppInstallTime());
-        e.addParameter(QC_REFERRERINSTANTEXP_KEY, QCPlayReferrer.getInstantExperienceLaunched());
         e.addParameter(QC_DEVICEID_KEY, deviceId);
         e.addParameter(QC_APPID_KEY, QCUtility.getAppInstallId(context));
         e.addParameter(QC_APPNAME_KEY, QCUtility.getAppName(context));

@@ -1,5 +1,8 @@
 # Quantcast Android SDK Changelog #
 
+## Version 1.5.1 ##
+- Remove play install referrer
+
 ## Version 1.5.0 ##
 - Fix crash with DefaultHttpClient lib
 - Replace install_referrer with play install referrer

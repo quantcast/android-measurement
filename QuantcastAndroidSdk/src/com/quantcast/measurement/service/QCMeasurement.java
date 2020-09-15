@@ -110,7 +110,6 @@ enum QCMeasurement implements QCNotificationListener {
                         m_userId = hashedId;
                     }
 
-                    QCPlayReferrer.connect(context);
                     //check if it is the very first time through
                     if (!isMeasurementActive()) {
                         QCLog.i(TAG, "First start of Quantcast " + m_optedOut);
