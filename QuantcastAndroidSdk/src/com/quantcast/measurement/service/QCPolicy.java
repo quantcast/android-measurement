@@ -15,10 +15,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.telephony.TelephonyManager;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,6 +26,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -150,19 +148,23 @@ class QCPolicy {
         QCLog.i(TAG, "checking load policy: " + loadedPolicy);
         if (!loadedPolicy) {
             String jsonString = null;
-            DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
-            defaultHttpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT,
-                    System.getProperty("http.agent"));
+
             InputStream inputStream = null;
+            HttpURLConnection urlConnection = null;
             try {
-                HttpGet method = new HttpGet(m_policyURL);
-                HttpResponse response = defaultHttpClient.execute(method);
-                inputStream = response.getEntity().getContent();
+                URL url = new URL(m_policyURL);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setRequestProperty("User-Agent", System.getProperty("http.agent"));
+
+                inputStream = urlConnection.getInputStream();
                 jsonString = readStreamToString(inputStream);
             } catch (Exception e) {
                 QCLog.e(TAG, "Could not download policy", e);
                 QCMeasurement.INSTANCE.logSDKError("policy-download-failure", e.getMessage(), null);
             } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
                 if (inputStream != null) {
                     try {
                         inputStream.close();
