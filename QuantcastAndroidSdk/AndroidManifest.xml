@@ -6,7 +6,6 @@
 
     <application
         android:usesCleartextTraffic="true">
-        <uses-library android:name="org.apache.http.legacy" android:required="false"/>
 
         <activity android:name="com.quantcast.measurement.service.AboutQuantcastScreen"
             android:label="OtherName"/>
