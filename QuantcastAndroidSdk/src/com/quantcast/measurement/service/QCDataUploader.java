@@ -12,21 +12,17 @@
 
 package com.quantcast.measurement.service;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpParams;
-import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HTTP;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 class QCDataUploader {
@@ -66,25 +62,24 @@ class QCDataUploader {
         }
 
         int code;
-        String url = QCUtility.addScheme(UPLOAD_URL_WITHOUT_SCHEME);
-        final DefaultHttpClient defaultHttpClient = new DefaultHttpClient();
-        defaultHttpClient.getParams().setParameter(CoreProtocolPNames.USER_AGENT,
-                System.getProperty("http.agent"));
-        final BasicHttpContext localContext = new BasicHttpContext();
 
+        HttpURLConnection urlConnection = null;
         try {
-            HttpPost post = new HttpPost(url);
-            post.setHeader("Content-Type", "application/json");
-            StringEntity se = new StringEntity(upload.toString(), HTTP.UTF_8);
-            post.setEntity(se);
+            URL url = new URL(QCUtility.addScheme(UPLOAD_URL_WITHOUT_SCHEME));
+            urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestProperty("User-Agent", System.getProperty("http.agent"));
+            urlConnection.setDoOutput(true);
+            urlConnection.setChunkedStreamingMode(0);
 
-            HttpParams params = new BasicHttpParams();
-            params.setBooleanParameter("http.protocol.expect-continue", false);
-            post.setParams(params);
+            OutputStream os = urlConnection.getOutputStream();
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8));
+            writer.write(upload.toString());
+            writer.flush();
+            writer.close();
+            os.close();
 
-            HttpResponse response = defaultHttpClient.execute(post, localContext);
-            code = response.getStatusLine().getStatusCode();
-        }catch (UnknownHostException uhe) {
+            code = urlConnection.getResponseCode();
+        } catch (UnknownHostException uhe) {
             QCLog.e(TAG, "Not connected to Internet", uhe);
             //don't send this error because its ok if they don't have internet connection
             return null;
@@ -92,6 +87,10 @@ class QCDataUploader {
             QCLog.e(TAG, "Could not upload events", e);
             QCMeasurement.INSTANCE.logSDKError("json-upload-failure", e.toString(), null);
             return null;
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
         }
 
         if (!isSuccessful(code)) {
